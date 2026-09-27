@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  moodle.iitd.ac.in and moodlenew.iitd.ac.in serve a broken chain: their *.iitd.ac.in
+  certificate is issued by "GlobalSign GCC R46 OV TLS CA 2025", but the server sends a
+  different (2018) intermediate. Desktop browsers fetch the missing one; Android WebView
+  doesn't, so those pages fail TLS. We ship that public intermediate (downloaded from
+  secure.globalsign.com, SHA-256 D1:60:E2:DE:...:40:63:F9, valid until 2029-06-23) and
+  trust it for iitd.ac.in only. Every other certificate check stays as normal.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">iitd.ac.in</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/globalsign_gcc_r46_ov_tls_ca_2025" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

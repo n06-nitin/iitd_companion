@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- mortarboard: cap body under the board -->
+    <path android:fillColor="#FFECE7DE"
+        android:pathData="M37,50 L37,62 Q54,73 71,62 L71,50 L54,58 Z" />
+
+    <!-- board -->
+    <path android:fillColor="#FFECE7DE"
+        android:strokeColor="#FFECE7DE" android:strokeWidth="3"
+        android:strokeLineJoin="round"
+        android:pathData="M54,31 L81,43.5 L54,56 L27,43.5 Z" />
+
+    <!-- tassel -->
+    <path android:strokeColor="#FFECE7DE" android:strokeWidth="3.5"
+        android:strokeLineCap="round" android:fillColor="#00000000"
+        android:pathData="M54,43.5 L77,50 L77,63" />
+    <path android:fillColor="#FFECE7DE"
+        android:pathData="M77,61 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+</vector>
