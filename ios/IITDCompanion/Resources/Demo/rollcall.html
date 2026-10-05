@@ -1,0 +1,73 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RollCall · My Courses</title>
+<link rel="stylesheet" href="/_demo/demo.css">
+<style>
+:root{--accent:#2f8f3a}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips .btn{background:#e7f3e8;color:#1f5f27}.chips .btn.sel{background:#2f8f3a;color:#fff}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+#scanner video,#scanner .frame{width:100%;max-width:320px;aspect-ratio:1;border-radius:12px;background:#1d2125;display:block;margin:10px 0;object-fit:cover}
+#scanner .frame{display:grid;place-items:center;color:#9aa4ad;font-size:13px;text-align:center;padding:20px}
+</style>
+</head><body>
+<div class="demo-banner">Demo mode · sample data, nothing is sent to IIT Delhi</div>
+<div class="topbar"><span class="brand">RollCall</span><a href="/logout.php">Logout</a></div>
+<div class="wrap">
+  <div class="card">
+    <h2>My Courses</h2>
+    <div class="chips" id="chips"></div>
+    <p id="selected" class="muted" style="margin:14px 0 0">Choose a course to mark attendance.</p>
+    <div class="actions">
+      <button class="btn" id="mark">Mark Attendance</button>
+      <button class="btn secondary" id="verify">Verify Attendance</button>
+    </div>
+  </div>
+  <div class="card" id="panel" hidden></div>
+</div>
+<script>
+var COURSES=['MCL211','MCL134','COL106','HUL261'];
+var sel=null, marked={}, stream=null;
+var HISTORY={MCL211:['Mon 29 Sep','Thu 2 Oct','Mon 6 Oct'],MCL134:['Tue 30 Sep','Fri 3 Oct'],COL106:['Wed 1 Oct','Mon 6 Oct'],HUL261:['Thu 2 Oct']};
+var chips=document.getElementById('chips'), panel=document.getElementById('panel');
+function now(){return new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}
+function stop(){ if(stream){ stream.getTracks().forEach(function(t){t.stop()}); stream=null; } }
+function render(){
+  chips.innerHTML='';
+  COURSES.forEach(function(c){
+    var b=document.createElement('button'); b.className='btn'+(c===sel?' sel':''); b.textContent=c;
+    b.onclick=function(){ sel=c; stop(); panel.hidden=true; render(); };
+    chips.appendChild(b);
+  });
+  document.getElementById('selected').innerHTML=sel?'Selected Course: <b>'+sel+'</b>':'Choose a course to mark attendance.';
+}
+function need(){ if(!sel){ panel.hidden=false; panel.innerHTML='<p class="error">Select a course first.</p>'; return false;} return true; }
+function done(){
+  stop(); marked[sel]=now();
+  panel.innerHTML='<div class="notice">Attendance marked for <b>'+sel+'</b> at '+marked[sel]+'.</div><p class="muted">Tap Verify to see your record.</p>';
+}
+document.getElementById('mark').onclick=function(){
+  if(!need()) return;
+  panel.hidden=false;
+  panel.innerHTML='<div id="scanner"><h3>Scan the class QR code</h3><p class="muted">Point the camera at the QR code your instructor shows in class.</p>'
+    +'<div class="frame" id="frame">Starting camera…</div>'
+    +'<button class="btn" id="sim">Use demo QR code</button></div>';
+  document.getElementById('sim').onclick=done;
+  var frame=document.getElementById('frame');
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(s){
+      stream=s; var v=document.createElement('video'); v.setAttribute('playsinline',''); v.muted=true; v.srcObject=s;
+      frame.replaceWith(v); v.play();
+    }).catch(function(){ frame.textContent='Camera unavailable. In demo mode you can use the demo QR code below.'; });
+  } else frame.textContent='In demo mode there is no class QR code to scan. Use the demo QR code below.';
+};
+document.getElementById('verify').onclick=function(){
+  if(!need()) return;
+  stop(); panel.hidden=false;
+  var rows=(HISTORY[sel]||[]).map(function(d){return '<tr><td>'+d+'</td><td>Present</td></tr>'}).join('');
+  if(marked[sel]) rows+='<tr><td>Today, '+marked[sel]+'</td><td><b>Present</b></td></tr>';
+  panel.innerHTML='<h3>'+sel+' · attendance record</h3><table><tr><th>Class</th><th>Status</th></tr>'+rows+'</table>';
+};
+render();
+</script>
+</body></html>

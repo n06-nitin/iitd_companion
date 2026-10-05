@@ -7,43 +7,67 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01A561940F4BDF9415AD7D40 /* moodle.html in Resources */ = {isa = PBXBuildFile; fileRef = 874FB8FED030DC7869F3E56D /* moodle.html */; };
+		022CAF0373E1A3456E62F584 /* moodle-login.html in Resources */ = {isa = PBXBuildFile; fileRef = 6AB1F616FE1C920479CEA50A /* moodle-login.html */; };
 		09747543BD3CF7C63B551BE7 /* Ui.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE99FF9D3CDA1514FBCB5B5 /* Ui.swift */; };
+		0E60A3D608E3B1201BFCC564 /* webmail-login.html in Resources */ = {isa = PBXBuildFile; fileRef = A0821CBF3D7CE086A0F89C03 /* webmail-login.html */; };
+		130A14E2E9AD732909BAEC5B /* Lecture-01.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 2774C61A8429ABC703808F57 /* Lecture-01.pdf */; };
 		2B5D09F42B421AF7C818B2AE /* IITDCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5893B9184810B28D89EFFC52 /* IITDCompanionApp.swift */; };
 		2CE6DEEF5842C79A51BA3270 /* OFL-BricolageGrotesque.txt in Resources */ = {isa = PBXBuildFile; fileRef = CD89B6DBE3D1D6B843A79708 /* OFL-BricolageGrotesque.txt */; };
 		3E2A2B657AB63741D4440C30 /* SecureCreds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E3C3C171E62C2A406C7598E /* SecureCreds.swift */; };
 		4BCEC6F668DC69E6157DE7E2 /* BricolageGrotesque.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 86584DE03699546D8BF34362 /* BricolageGrotesque.ttf */; };
 		51141B7AE9DF0DD03D01B520 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C891C516A33849D93E5DDF10 /* PrivacyInfo.xcprivacy */; };
+		6C65341ED63D062C49F98EA9 /* webmail.html in Resources */ = {isa = PBXBuildFile; fileRef = A9CB2759F73AD48DFA2952F9 /* webmail.html */; };
+		6FB56456300BF5E567889A16 /* moodle-guest.html in Resources */ = {isa = PBXBuildFile; fileRef = FB3E1B3478988F400962C2E6 /* moodle-guest.html */; };
 		949AF732D200AF742CFA2101 /* globalsign_gcc_r46_ov_tls_ca_2025.cer in Resources */ = {isa = PBXBuildFile; fileRef = 70AC5A220BBCD68864A332BD /* globalsign_gcc_r46_ov_tls_ca_2025.cer */; };
 		94F61F26616642E91A21A157 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 89938A087CAF8C30456569DB /* Assets.xcassets */; };
 		9600671DF8305749326209CE /* TabSwiper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF74AF6107ED3C2ED353EA8 /* TabSwiper.swift */; };
+		AB8E5F934ACE7CA9C3A099C9 /* demo.css in Resources */ = {isa = PBXBuildFile; fileRef = AB7D08DB6A663E3B9F82C22E /* demo.css */; };
+		B71EB0384FF3BB2E68BD1D21 /* oauth-login.html in Resources */ = {isa = PBXBuildFile; fileRef = 0877F73BB99ED8D4CFC3E7DB /* oauth-login.html */; };
 		BEF689CD75A402BE582BA26B /* LoginScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 900D62E001ECBA8C590AE669 /* LoginScript.swift */; };
 		C1100BB31A630E1E0B64CFEB /* CompanionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FE929CD97C2756B9D1D61A /* CompanionScreen.swift */; };
+		D1849F502016F0D4A63F0BD8 /* rollcall-captcha.svg in Resources */ = {isa = PBXBuildFile; fileRef = 37C4A18206C001FBC21F2785 /* rollcall-captcha.svg */; };
 		D551582C7A29E1B49865CD8F /* PortalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2ED2D2C0AB00CB29D1AEB9F /* PortalSession.swift */; };
+		D9759B03FB862083050C805F /* Demo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7766EF53EA58E4D6932F8B /* Demo.swift */; };
 		D9E5322CB90A1814AD41ED7E /* WebData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1EDA4DD580A98957519975D /* WebData.swift */; };
+		E25FB5C712D27B35A9E9B35F /* rollcall.html in Resources */ = {isa = PBXBuildFile; fileRef = 60F1ED3934C2BD5B8E585A1A /* rollcall.html */; };
 		E55BDF0C716F7DD288D6A371 /* SetupScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BE1C8ED2F2D09294B14500B /* SetupScreen.swift */; };
+		EE0192092958CA09AE343E09 /* rollcall-landing.html in Resources */ = {isa = PBXBuildFile; fileRef = 80F26ACB415CD08284271904 /* rollcall-landing.html */; };
 		F3580687D9BE993D1DDD0965 /* RollCallScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3CC621F0460F6FF8D5B80 /* RollCallScript.swift */; };
 		FA2F0DFEEE31FF70CF6769D2 /* PagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D40B27D52DD53FDDFCEAE9A6 /* PagesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0877F73BB99ED8D4CFC3E7DB /* oauth-login.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "oauth-login.html"; sourceTree = "<group>"; };
 		1DA3CC621F0460F6FF8D5B80 /* RollCallScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollCallScript.swift; sourceTree = "<group>"; };
 		23862DA34B30534E98AC3621 /* IITDCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = IITDCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2774C61A8429ABC703808F57 /* Lecture-01.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Lecture-01.pdf"; sourceTree = "<group>"; };
 		2BE99FF9D3CDA1514FBCB5B5 /* Ui.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ui.swift; sourceTree = "<group>"; };
+		37C4A18206C001FBC21F2785 /* rollcall-captcha.svg */ = {isa = PBXFileReference; path = "rollcall-captcha.svg"; sourceTree = "<group>"; };
 		3BE1C8ED2F2D09294B14500B /* SetupScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupScreen.swift; sourceTree = "<group>"; };
 		5893B9184810B28D89EFFC52 /* IITDCompanionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IITDCompanionApp.swift; sourceTree = "<group>"; };
-		70AC5A220BBCD68864A332BD /* globalsign_gcc_r46_ov_tls_ca_2025.cer */ = {isa = PBXFileReference; lastKnownFileType = file; path = globalsign_gcc_r46_ov_tls_ca_2025.cer; sourceTree = "<group>"; };
+		60F1ED3934C2BD5B8E585A1A /* rollcall.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = rollcall.html; sourceTree = "<group>"; };
+		6AB1F616FE1C920479CEA50A /* moodle-login.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "moodle-login.html"; sourceTree = "<group>"; };
+		70AC5A220BBCD68864A332BD /* globalsign_gcc_r46_ov_tls_ca_2025.cer */ = {isa = PBXFileReference; path = globalsign_gcc_r46_ov_tls_ca_2025.cer; sourceTree = "<group>"; };
+		80F26ACB415CD08284271904 /* rollcall-landing.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "rollcall-landing.html"; sourceTree = "<group>"; };
 		86584DE03699546D8BF34362 /* BricolageGrotesque.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = BricolageGrotesque.ttf; sourceTree = "<group>"; };
+		874FB8FED030DC7869F3E56D /* moodle.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = moodle.html; sourceTree = "<group>"; };
 		89938A087CAF8C30456569DB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8B5B3B2708F356CDF78AE1BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D7766EF53EA58E4D6932F8B /* Demo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Demo.swift; sourceTree = "<group>"; };
 		8E3C3C171E62C2A406C7598E /* SecureCreds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureCreds.swift; sourceTree = "<group>"; };
 		900D62E001ECBA8C590AE669 /* LoginScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginScript.swift; sourceTree = "<group>"; };
+		A0821CBF3D7CE086A0F89C03 /* webmail-login.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "webmail-login.html"; sourceTree = "<group>"; };
 		A7FE929CD97C2756B9D1D61A /* CompanionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionScreen.swift; sourceTree = "<group>"; };
+		A9CB2759F73AD48DFA2952F9 /* webmail.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = webmail.html; sourceTree = "<group>"; };
+		AB7D08DB6A663E3B9F82C22E /* demo.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demo.css; sourceTree = "<group>"; };
 		B2ED2D2C0AB00CB29D1AEB9F /* PortalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalSession.swift; sourceTree = "<group>"; };
-		C891C516A33849D93E5DDF10 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		C891C516A33849D93E5DDF10 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		CD89B6DBE3D1D6B843A79708 /* OFL-BricolageGrotesque.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-BricolageGrotesque.txt"; sourceTree = "<group>"; };
 		D40B27D52DD53FDDFCEAE9A6 /* PagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagesView.swift; sourceTree = "<group>"; };
 		DAF74AF6107ED3C2ED353EA8 /* TabSwiper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSwiper.swift; sourceTree = "<group>"; };
 		F1EDA4DD580A98957519975D /* WebData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebData.swift; sourceTree = "<group>"; };
+		FB3E1B3478988F400962C2E6 /* moodle-guest.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "moodle-guest.html"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -60,6 +84,7 @@
 			children = (
 				89938A087CAF8C30456569DB /* Assets.xcassets */,
 				A7FE929CD97C2756B9D1D61A /* CompanionScreen.swift */,
+				8D7766EF53EA58E4D6932F8B /* Demo.swift */,
 				5893B9184810B28D89EFFC52 /* IITDCompanionApp.swift */,
 				8B5B3B2708F356CDF78AE1BD /* Info.plist */,
 				900D62E001ECBA8C590AE669 /* LoginScript.swift */,
@@ -83,8 +108,27 @@
 				86584DE03699546D8BF34362 /* BricolageGrotesque.ttf */,
 				70AC5A220BBCD68864A332BD /* globalsign_gcc_r46_ov_tls_ca_2025.cer */,
 				CD89B6DBE3D1D6B843A79708 /* OFL-BricolageGrotesque.txt */,
+				6FC8768AE3A44A508D0744B8 /* Demo */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		6FC8768AE3A44A508D0744B8 /* Demo */ = {
+			isa = PBXGroup;
+			children = (
+				AB7D08DB6A663E3B9F82C22E /* demo.css */,
+				2774C61A8429ABC703808F57 /* Lecture-01.pdf */,
+				FB3E1B3478988F400962C2E6 /* moodle-guest.html */,
+				6AB1F616FE1C920479CEA50A /* moodle-login.html */,
+				874FB8FED030DC7869F3E56D /* moodle.html */,
+				0877F73BB99ED8D4CFC3E7DB /* oauth-login.html */,
+				37C4A18206C001FBC21F2785 /* rollcall-captcha.svg */,
+				80F26ACB415CD08284271904 /* rollcall-landing.html */,
+				60F1ED3934C2BD5B8E585A1A /* rollcall.html */,
+				A0821CBF3D7CE086A0F89C03 /* webmail-login.html */,
+				A9CB2759F73AD48DFA2952F9 /* webmail.html */,
+			);
+			path = Demo;
 			sourceTree = "<group>";
 		};
 		ECD960CAEBBDEA2B5FEAA910 = {
@@ -157,9 +201,20 @@
 			files = (
 				94F61F26616642E91A21A157 /* Assets.xcassets in Resources */,
 				4BCEC6F668DC69E6157DE7E2 /* BricolageGrotesque.ttf in Resources */,
+				130A14E2E9AD732909BAEC5B /* Lecture-01.pdf in Resources */,
 				2CE6DEEF5842C79A51BA3270 /* OFL-BricolageGrotesque.txt in Resources */,
 				51141B7AE9DF0DD03D01B520 /* PrivacyInfo.xcprivacy in Resources */,
+				AB8E5F934ACE7CA9C3A099C9 /* demo.css in Resources */,
 				949AF732D200AF742CFA2101 /* globalsign_gcc_r46_ov_tls_ca_2025.cer in Resources */,
+				6FB56456300BF5E567889A16 /* moodle-guest.html in Resources */,
+				022CAF0373E1A3456E62F584 /* moodle-login.html in Resources */,
+				01A561940F4BDF9415AD7D40 /* moodle.html in Resources */,
+				B71EB0384FF3BB2E68BD1D21 /* oauth-login.html in Resources */,
+				D1849F502016F0D4A63F0BD8 /* rollcall-captcha.svg in Resources */,
+				EE0192092958CA09AE343E09 /* rollcall-landing.html in Resources */,
+				E25FB5C712D27B35A9E9B35F /* rollcall.html in Resources */,
+				0E60A3D608E3B1201BFCC564 /* webmail-login.html in Resources */,
+				6C65341ED63D062C49F98EA9 /* webmail.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,6 +226,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C1100BB31A630E1E0B64CFEB /* CompanionScreen.swift in Sources */,
+				D9759B03FB862083050C805F /* Demo.swift in Sources */,
 				2B5D09F42B421AF7C818B2AE /* IITDCompanionApp.swift in Sources */,
 				BEF689CD75A402BE582BA26B /* LoginScript.swift in Sources */,
 				FA2F0DFEEE31FF70CF6769D2 /* PagesView.swift in Sources */,
@@ -221,7 +277,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -306,7 +362,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

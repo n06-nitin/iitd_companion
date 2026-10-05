@@ -77,6 +77,8 @@ enum Portal: String, CaseIterable, Identifiable {
 final class PortalSession {
     let portal: Portal
     @ObservationIgnored private let creds: Creds
+    /// Signed in with the demo login: the tab shows `DemoServer`'s pages, not the real portal.
+    @ObservationIgnored let demo: Bool
     @ObservationIgnored private(set) var webView: WKWebView?
 
     private(set) var page = "loading"
@@ -116,18 +118,23 @@ final class PortalSession {
     init(portal: Portal, creds: Creds) {
         self.portal = portal
         self.creds = creds
+        demo = Demo.isDemo(creds)
     }
+
+    /// The real portal's address, or its demo copy.
+    private func resolve(_ url: URL) -> URL { demo ? Demo.url(url) : url }
+    private var homeURL: URL { resolve(portal.home) }
 
     func run(_ js: String) { webView?.evaluateJavaScript(js, completionHandler: nil) }
 
-    func home() { webView?.load(URLRequest(url: portal.home)) }
+    func home() { webView?.load(URLRequest(url: homeURL)) }
 
     /// Reload, and let auto-login try again if it had given up.
     func reload() {
         loginFailed = false
         autoSubmitted = false
         guard let w = webView else { return }
-        if let failed = failedURL ?? (w.url == nil ? portal.home : nil) {
+        if let failed = failedURL ?? (w.url == nil ? homeURL : nil) {
             w.load(URLRequest(url: failed))
         } else {
             w.reload()
@@ -165,6 +172,7 @@ final class PortalSession {
         config.preferences.javaScriptCanOpenWindowsAutomatically = true
         config.userContentController.add(delegate, name: "ic")
         config.userContentController.add(delegate, name: "icTouch")
+        config.setURLSchemeHandler(DemoServer.shared, forURLScheme: Demo.scheme)
 
         let w = WKWebView(frame: .zero, configuration: config)
         w.navigationDelegate = delegate
@@ -186,7 +194,7 @@ final class PortalSession {
             let p = Int((w.estimatedProgress * 100).rounded())
             MainActor.assumeIsolated { if self?.progress != p { self?.progress = p } }
         }
-        w.load(URLRequest(url: portal.home))
+        w.load(URLRequest(url: homeURL))
         webView = w
         return w
     }
@@ -215,7 +223,7 @@ final class PortalSession {
     }
 
     fileprivate func loadFailed(_ w: WKWebView, url: URL?, error: Error) {
-        failedURL = url ?? failedURL ?? portal.home
+        failedURL = url ?? failedURL ?? homeURL
         showingError = true
         w.loadHTMLString(errorPage(url: failedURL, error: error), baseURL: nil)
     }
@@ -259,7 +267,7 @@ final class PortalSession {
         case "loggedout":
             if !redirected {
                 redirected = true
-                if let url = portal.login?.loginUrl { webView?.load(URLRequest(url: url)) }
+                if let url = portal.login?.loginUrl { webView?.load(URLRequest(url: resolve(url))) }
             }
         case "login":
             if !filled && onLoginHost() {
@@ -278,7 +286,7 @@ final class PortalSession {
     }
 
     private func onLoginHost() -> Bool {
-        guard let url = webView?.url, url.scheme == "https", let host = url.host else { return false }
+        guard let url = webView?.url, url.scheme == (demo ? Demo.scheme : "https"), let host = url.host else { return false }
         return portal.loginHosts.contains(host)
     }
 
@@ -318,6 +326,9 @@ func isIitd(_ url: URL) -> Bool {
     guard let host = url.host?.lowercased(), url.scheme == "https" || url.scheme == "http" else { return false }
     return host == "iitd.ac.in" || host.hasSuffix(".iitd.ac.in")
 }
+
+/// Stays inside the tab: the portals themselves, or demo mode's copies of them.
+func isPortal(_ url: URL) -> Bool { isIitd(url) || url.scheme == Demo.scheme }
 
 @MainActor
 func openExternally(_ url: URL) {
@@ -376,7 +387,7 @@ private final class WebDelegate: NSObject, WKNavigationDelegate, WKUIDelegate, W
         guard let url = action.request.url, let frame = action.targetFrame, frame.isMainFrame else {
             return decisionHandler(.allow)
         }
-        if isIitd(url) || ["about", "data", "blob"].contains(url.scheme ?? "") {
+        if isPortal(url) || ["about", "data", "blob"].contains(url.scheme ?? "") {
             decisionHandler(.allow)
         } else {
             openExternally(url)
@@ -391,7 +402,15 @@ private final class WebDelegate: NSObject, WKNavigationDelegate, WKUIDelegate, W
             .lowercased().hasPrefix("attachment") ?? false
         // Moodle files and mail attachments are saved, not shown (PDFs too, as on Android)
         let pdf = response.response.mimeType == "application/pdf"
-        decisionHandler(attachment || pdf || !response.canShowMIMEType ? .download : .allow)
+        guard attachment || pdf || !response.canShowMIMEType else { return decisionHandler(.allow) }
+        // WebKit can't download from a custom scheme; demo files are copied out of the bundle instead
+        if let url = response.response.url, let file = DemoServer.file(url) {
+            decisionHandler(.cancel)
+            let dest = downloadDestination(file.lastPathComponent)
+            if (try? FileManager.default.copyItem(at: file, to: dest)) != nil { showDownload(dest) }
+            return
+        }
+        decisionHandler(.download)
     }
 
     func webView(_ w: WKWebView, didStartProvisionalNavigation nav: WKNavigation!) { session?.pageStarted() }
@@ -422,7 +441,7 @@ private final class WebDelegate: NSObject, WKNavigationDelegate, WKUIDelegate, W
                  for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
         // one window per tab: pop-ups open in place, other sites in their own app
         if let url = action.request.url {
-            if isIitd(url) { w.load(action.request) } else { openExternally(url) }
+            if isPortal(url) { w.load(action.request) } else { openExternally(url) }
         }
         return nil
     }
@@ -475,10 +494,18 @@ private final class WebDelegate: NSObject, WKNavigationDelegate, WKUIDelegate, W
 
     func download(_ download: WKDownload, decideDestinationUsing response: URLResponse,
                   suggestedFilename: String, completionHandler: @escaping @MainActor (URL?) -> Void) {
+        let url = downloadDestination(suggestedFilename)
+        destinations[ObjectIdentifier(download)] = url
+        Toaster.shared.show("Downloading \(url.lastPathComponent)")
+        completionHandler(url)
+    }
+
+    /// A free name in Documents/Downloads, numbered when the file is already there.
+    private func downloadDestination(_ suggested: String) -> URL {
         let fm = FileManager.default
         let dir = fm.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Downloads")
         try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        let name = suggestedFilename.isEmpty ? "download" : suggestedFilename
+        let name = suggested.isEmpty ? "download" : suggested
         let base = (name as NSString).deletingPathExtension, ext = (name as NSString).pathExtension
         var url = dir.appendingPathComponent(name)
         var n = 1
@@ -486,9 +513,13 @@ private final class WebDelegate: NSObject, WKNavigationDelegate, WKUIDelegate, W
             url = dir.appendingPathComponent(ext.isEmpty ? "\(base) (\(n))" : "\(base) (\(n)).\(ext)")
             n += 1
         }
-        destinations[ObjectIdentifier(download)] = url
-        Toaster.shared.show("Downloading \(url.lastPathComponent)")
-        completionHandler(url)
+        return url
+    }
+
+    private func showDownload(_ url: URL) {
+        let p = FilePreview(url: url)
+        preview = p
+        p.present()
     }
 
     func download(_ download: WKDownload, didReceive challenge: URLAuthenticationChallenge,
@@ -499,9 +530,7 @@ private final class WebDelegate: NSObject, WKNavigationDelegate, WKUIDelegate, W
 
     func downloadDidFinish(_ download: WKDownload) {
         guard let url = destinations.removeValue(forKey: ObjectIdentifier(download)) else { return }
-        let p = FilePreview(url: url)
-        preview = p
-        p.present()
+        showDownload(url)
     }
 
     func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {

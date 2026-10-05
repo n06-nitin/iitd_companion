@@ -53,6 +53,7 @@ enum WebData {
 
     /// Sign out everywhere: every cookie, cache and storage of every portal.
     static func clear() async {
+        DemoServer.reset()
         try? FileManager.default.removeItem(at: vault)
         let all = WKWebsiteDataStore.allWebsiteDataTypes()
         await WKWebsiteDataStore.default().removeData(ofTypes: all, modifiedSince: .distantPast)

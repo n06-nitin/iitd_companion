@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Log in to the site</title>
+<link rel="stylesheet" href="/_demo/demo.css">
+<style>.login{max-width:400px;margin:40px auto 0;padding:0 16px}.logo{text-align:center;font-size:22px;font-weight:700;margin-bottom:20px}.captcha b{color:#1d2125}.remember{display:flex;gap:8px;align-items:center;margin:12px 0 0;font-size:14px}</style>
+<script>document.documentElement.style.setProperty('--accent',location.hostname.indexOf('moodlenew')===0?'#1a7f6e':'#d46b08')</script>
+</head><body>
+<div class="demo-banner">Demo mode · sample data, nothing is sent to IIT Delhi</div>
+<div class="login">
+  <div class="logo" id="site"></div>
+  <div class="card">
+    {{ERROR}}
+    <form id="login" method="get" action="/login/index.php">
+      <label for="username">Username</label>
+      <input type="text" name="username" id="username" autocapitalize="off" autocomplete="username">
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" autocomplete="current-password">
+      {{CAPTCHA}}
+      <div class="remember" {{REMEMBER}}><input type="checkbox" name="rememberusername" id="rememberusername"><label for="rememberusername" style="margin:0;font-weight:400">Remember username</label></div>
+      <p><button type="submit" id="loginbtn" class="btn" style="width:100%">Log in</button></p>
+    </form>
+  </div>
+</div>
+<script>document.getElementById('site').textContent=location.hostname.indexOf('moodlenew')===0?'Moodle New · IIT Delhi':'Moodle · IIT Delhi';</script>
+</body></html>

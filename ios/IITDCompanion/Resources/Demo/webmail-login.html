@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IIT Delhi Webmail :: Welcome</title>
+<link rel="stylesheet" href="/_demo/demo.css">
+<style>:root{--accent:#2c6db5}.login{max-width:380px;margin:48px auto 0;padding:0 16px}.logo{text-align:center;font-size:22px;font-weight:700;color:#2c6db5;margin-bottom:22px}</style>
+</head><body>
+<div class="demo-banner">Demo mode · sample data, nothing is sent to IIT Delhi</div>
+<div class="login">
+  <div class="logo">IIT Delhi Webmail</div>
+  <div class="card">
+    <div id="messagestack">{{ERROR}}</div>
+    <form id="login-form" name="login-form" method="get" action="/">
+      <input type="hidden" name="_task" value="login">
+      <label for="rcmloginuser">Username</label>
+      <input name="_user" id="rcmloginuser" type="text" autocapitalize="off" autocomplete="username">
+      <label for="rcmloginpwd">Password</label>
+      <input name="_pass" id="rcmloginpwd" type="password" autocomplete="current-password">
+      <p><button type="submit" id="rcmloginsubmit" class="btn" style="width:100%">Login</button></p>
+    </form>
+  </div>
+  <p class="muted" style="text-align:center">Roundcube Webmail</p>
+</div>
+</body></html>

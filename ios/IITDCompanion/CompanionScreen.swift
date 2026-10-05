@@ -132,7 +132,7 @@ private struct TopBar: View {
                 ClayIconButton(icon: "icon_refresh", description: "Reload") { session.reload() }
                 Menu {
                     Button("Open in browser") {
-                        openExternally(session.webView?.url ?? session.portal.home)
+                        openExternally(Demo.real(session.webView?.url ?? session.portal.home))
                     }
                     Button("Edit saved login", action: onEditCreds)
                     Button("Forget login & sign out", action: onForget)

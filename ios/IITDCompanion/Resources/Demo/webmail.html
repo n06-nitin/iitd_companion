@@ -1,0 +1,67 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IIT Delhi Webmail :: Inbox</title>
+<link rel="stylesheet" href="/_demo/demo.css">
+<style>
+:root{--accent:#2c6db5}
+.folders{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 0}
+.folders a{white-space:nowrap;font-size:14px;padding:6px 12px;border-radius:16px;background:#e8eef7;color:#2c6db5}
+.folders a.sel{background:#2c6db5;color:#fff}
+.msg .from{font-weight:600}.msg.unread .subj{font-weight:700}
+.msg .row{display:flex;justify-content:space-between;gap:8px}
+.msg .date{color:#6a737b;font-size:12px;white-space:nowrap}
+.msg .subj{margin-top:2px}.msg .snip{color:#6a737b;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.body{white-space:pre-wrap;margin-top:14px}
+.att{display:inline-flex;gap:6px;align-items:center;margin-top:14px;padding:8px 12px;border:1px solid #dee2e6;border-radius:8px;color:#1d2125}
+</style>
+</head><body>
+<div class="demo-banner">Demo mode · sample data, nothing is sent to IIT Delhi</div>
+<div class="topbar"><span class="brand">IIT Delhi Webmail</span><a href="/?_task=mail&_action=compose">Compose</a><a href="/?_task=logout">Logout</a></div>
+<div id="app"></div>
+<script>
+var MAIL=[
+ {uid:6,from:"Academic Section",addr:"acadsection@demo.iitd.ac.in",date:"Today 9:12 AM",unread:true,subj:"Minor exam schedule — Semester I",
+  body:"Dear students,\n\nThe schedule for the Minor examinations of Semester I is now available on the academic calendar. Please check your course timings and exam venues carefully.\n\nRegards,\nAcademic Section",att:"Lecture-01.pdf"},
+ {uid:5,from:"MCL211 Course Team",addr:"mcl211@demo.iitd.ac.in",date:"Today 8:40 AM",unread:true,subj:"Tutorial 3 uploaded on Moodle",
+  body:"Hi all,\n\nTutorial sheet 3 (shafts and keys) is now on Moodle New. Solutions will be discussed in Thursday's tutorial.\n\nCourse Team"},
+ {uid:4,from:"Hostel Office",addr:"hostel@demo.iitd.ac.in",date:"Yesterday",unread:false,subj:"Water supply maintenance on Saturday",
+  body:"Dear residents,\n\nWater supply will be interrupted on Saturday between 10 AM and 1 PM for scheduled maintenance.\n\nHostel Office"},
+ {uid:3,from:"Central Library",addr:"library@demo.iitd.ac.in",date:"Mon",unread:false,subj:"Book due reminder",
+  body:"This is a reminder that 'Machine Design' (Norton) is due for return on Friday. You can renew it once from the library portal."},
+ {uid:2,from:"Training & Placement",addr:"tnp@demo.iitd.ac.in",date:"Sun",unread:false,subj:"Internship registration open",
+  body:"Registration for the summer internship drive is now open. Please complete your profile before the deadline."},
+ {uid:1,from:"Computer Services Centre",addr:"csc@demo.iitd.ac.in",date:"Sep 28",unread:false,subj:"Welcome to IIT Delhi Webmail",
+  body:"Your mailbox is ready. Use your Kerberos ID to sign in to Webmail, Moodle and other campus services."}
+];
+var q=new URLSearchParams(location.search), app=document.getElementById('app');
+function esc(s){return (s||'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function folders(sel){return '<div class="folders">'+['Inbox','Sent','Drafts','Trash'].map(function(f){return '<a class="'+(f===sel?'sel':'')+'" href="/?_task=mail&_mbox='+f.toUpperCase()+'">'+f+'</a>'}).join('')+'</div>'}
+var action=q.get('_action'), mbox=q.get('_mbox')||'INBOX';
+if(action==='show'){
+  var m=MAIL.filter(function(x){return String(x.uid)===q.get('_uid')})[0]||MAIL[0];
+  app.innerHTML='<div class="wrap"><p><a href="/?_task=mail&_mbox=INBOX">‹ Inbox</a></p><div class="card"><h2>'+esc(m.subj)+'</h2>'
+   +'<div class="muted">From <b>'+esc(m.from)+'</b> &lt;'+esc(m.addr)+'&gt; · '+esc(m.date)+'</div>'
+   +'<div class="body">'+esc(m.body)+'</div>'
+   +(m.att?'<a class="att" href="/_demo/'+m.att+'">📎 '+m.att+'</a>':'')
+   +'<p style="margin-top:18px"><a class="btn" href="/?_task=mail&_action=compose&_reply_uid='+m.uid+'">Reply</a></p></div></div>';
+} else if(action==='compose'){
+  var r=MAIL.filter(function(x){return String(x.uid)===q.get('_reply_uid')})[0];
+  app.innerHTML='<div class="wrap"><p><a href="/?_task=mail&_mbox=INBOX">‹ Inbox</a></p><div class="card" id="c"><h2>Compose</h2>'
+   +'<label>To</label><input type="text" value="'+(r?esc(r.addr):'')+'">'
+   +'<label>Subject</label><input type="text" value="'+(r?'Re: '+esc(r.subj):'')+'">'
+   +'<label>Message</label><textarea></textarea>'
+   +'<p><button class="btn" id="send">Send</button></p></div></div>';
+  document.getElementById('send').onclick=function(){
+    document.getElementById('c').innerHTML='<div class="notice">Message sent. (Demo mode: nothing was actually sent.)</div><a href="/?_task=mail&_mbox=INBOX">Back to Inbox</a>';
+  };
+} else {
+  var list=mbox==='INBOX'?MAIL:[];
+  app.innerHTML=folders(mbox.charAt(0)+mbox.slice(1).toLowerCase())+'<div class="wrap"><div class="card" style="padding:4px 12px">'
+   +(list.length?'<ul class="list">'+list.map(function(m){
+      return '<li class="msg'+(m.unread?' unread':'')+'"><a href="/?_task=mail&_action=show&_uid='+m.uid+'"><div class="row"><span class="from">'+esc(m.from)+'</span><span class="date">'+esc(m.date)+'</span></div>'
+       +'<div class="subj">'+esc(m.subj)+'</div><div class="snip">'+esc(m.body.split('\n').join(' '))+'</div></a></li>'}).join('')+'</ul>'
+    :'<p class="muted" style="padding:12px 4px">This folder is empty.</p>')
+   +'</div></div>';
+}
+</script>
+</body></html>
