@@ -1,0 +1,10 @@
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.ipa
+*.dSYM.zip
+.DS_Store
+
+# store/review assets (screenshots, review video)
+StoreListing/
