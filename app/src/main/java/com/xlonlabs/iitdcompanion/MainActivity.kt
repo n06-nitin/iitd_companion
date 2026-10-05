@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -298,7 +299,8 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
                         AndroidView(
                             modifier = Modifier.fillMaxSize(),
                             factory = { c ->
-                                s.webView(c, chooseFile)
+                                // the WebView outlives this AndroidView; a recreated one must take it from the old holder
+                                s.webView(c, chooseFile).also { (it.parent as? ViewGroup)?.removeView(it) }
                             },
                             update = {
                                 it.visibility = if (p == tab || p == swiper.target) View.VISIBLE else View.GONE
