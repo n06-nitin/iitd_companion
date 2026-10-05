@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IITD Companion Privacy Policy</title>
+<meta name="description" content="Privacy policy for the IITD Companion apps for Android and iPhone.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #eceef2;
+    --surface: #f7f8fa;
+    --text: #17181c;
+    --muted: #5b5d66;
+    --rule: #d5d8df;
+    --shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 10px 24px -12px rgba(23,24,28,.28);
+    --moodle: #c96a14;
+    --moodlenew: #1f8f7d;
+    --rollcall: #3f8f32;
+    --webmail: #2f6fc4;
+    --link: #2f6fc4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #141518;
+      --surface: #22242a;
+      --text: #ece7de;
+      --muted: #9a968e;
+      --rule: #2e3138;
+      --shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 14px 30px -12px rgba(0,0,0,.8);
+      --moodle: #f0913a;
+      --moodlenew: #4fc1ae;
+      --rollcall: #7ccb6e;
+      --webmail: #6fa6f2;
+      --link: #8db8f5;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #141518;
+    --surface: #22242a;
+    --text: #ece7de;
+    --muted: #9a968e;
+    --rule: #2e3138;
+    --shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 14px 30px -12px rgba(0,0,0,.8);
+    --moodle: #f0913a;
+    --moodlenew: #4fc1ae;
+    --rollcall: #7ccb6e;
+    --webmail: #6fa6f2;
+    --link: #8db8f5;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    padding-inline: max(20px, env(safe-area-inset-left)) max(20px, env(safe-area-inset-right));
+    padding-block: calc(56px + env(safe-area-inset-top, 0px)) calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+  main { max-width: 42rem; margin-inline: auto; display: grid; gap: 40px; }
+  h1, h2 {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 { font-size: clamp(2rem, 6vw, 2.75rem); font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; }
+  h2 { font-size: 1.3rem; font-weight: 600; line-height: 1.25; }
+  p, ul { margin: 0; }
+  ul { padding-left: 1.2em; display: grid; gap: 6px; }
+  a { color: var(--link); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 3px; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .88em; overflow-wrap: anywhere; }
+
+  header { display: grid; gap: 14px; }
+  .portals { display: flex; gap: 8px; align-items: center; }
+  .portals span { width: 10px; height: 10px; border-radius: 50%; }
+  .meta { color: var(--muted); font-size: .95rem; }
+
+  .glance {
+    background: var(--surface);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    padding: 22px 24px;
+    display: grid;
+    gap: 10px;
+  }
+  .glance h2 { font-size: 1.05rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .glance ul { list-style: none; padding: 0; gap: 8px; }
+  .glance li { padding-left: 1.4em; position: relative; }
+  .glance li::before { content: ""; position: absolute; left: 0; top: .62em; width: .5em; height: .5em; border-radius: 50%; background: var(--rollcall); }
+
+  section { display: grid; gap: 12px; }
+  .sites { display: grid; gap: 4px; padding: 0; list-style: none; }
+  .sites li { display: flex; gap: 10px; align-items: baseline; }
+  .sites .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; transform: translateY(-1px); }
+  footer { border-top: 1px solid var(--rule); padding-top: 20px; color: var(--muted); font-size: .95rem; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="portals" aria-hidden="true">
+      <span style="background: var(--webmail)"></span>
+      <span style="background: var(--moodlenew)"></span>
+      <span style="background: var(--moodle)"></span>
+      <span style="background: var(--rollcall)"></span>
+    </div>
+    <h1>IITD Companion Privacy Policy</h1>
+    <p class="meta">Effective 5 October 2026 · Android and iPhone app <code>com.xlonlabs.iitdcompanion</code> · Developer: Nitin Singh (XLON Labs)</p>
+  </header>
+
+  <div class="glance">
+    <h2>At a glance</h2>
+    <ul>
+      <li>The app does not collect, sell or share any personal data.</li>
+      <li>Your Kerberos ID and password stay on your phone, encrypted, and are only typed into IIT Delhi's own login pages.</li>
+      <li>No analytics, no ads, no tracking, and no server run by the developer.</li>
+    </ul>
+  </div>
+
+  <section>
+    <h2>What the app is</h2>
+    <p>IITD Companion opens four IIT Delhi websites inside one app and signs you in to them with your saved Kerberos ID and password. It is an unofficial app and is not affiliated with or endorsed by IIT Delhi. The websites it opens are run by IIT Delhi:</p>
+    <ul class="sites">
+      <li><span class="dot" style="background: var(--webmail)"></span><span>Webmail: <code>webmail.iitd.ac.in</code></span></li>
+      <li><span class="dot" style="background: var(--moodlenew)"></span><span>Moodle New: <code>moodlenew.iitd.ac.in</code></span></li>
+      <li><span class="dot" style="background: var(--moodle)"></span><span>Moodle: <code>moodle.iitd.ac.in</code></span></li>
+      <li><span class="dot" style="background: var(--rollcall)"></span><span>RollCall: <code>rollcall.iitd.ac.in</code>, signing in through <code>oauth.iitd.ac.in</code></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Your Kerberos ID and password</h2>
+    <p>When you save your login, it is stored only on your phone, encrypted. On Android, the app encrypts it with an AES-256 key held in your phone's Android Keystore. On iPhone, it is kept in the iOS Keychain, readable only on that phone once it has been unlocked. It is never sent to the developer or to anyone else.</p>
+    <p>The app uses it for one thing: filling in the login form on the IIT Delhi sites listed above. It only does this on those exact addresses, over HTTPS. The app never solves CAPTCHAs for you; you type those yourself.</p>
+    <p>Your saved login is excluded from Android backups, and on iPhone it is kept for that phone only, so it is never synced to iCloud Keychain or restored onto another device. To remove it, open the <strong>⋮</strong> menu in the app and choose <strong>Forget login &amp; sign out</strong>, or uninstall the app. On iPhone, reinstalling the app also starts you signed out.</p>
+  </section>
+
+  <section>
+    <h2>Other data kept on your phone</h2>
+    <ul>
+      <li><strong>Website cookies and storage</strong> for the IIT Delhi sites, so you stay signed in, the same as a web browser keeps them. On iPhone, the app also keeps the IIT Delhi sign-in cookies in a protected file inside the app, so you stay signed in after the app is closed. <strong>Forget login &amp; sign out</strong> deletes all of them.</li>
+      <li><strong>The tab you last had open</strong>, so the app reopens there.</li>
+      <li><strong>Files you download</strong> from Moodle or Webmail. On Android, they are saved to your phone's Downloads folder through Android's download manager. On iPhone, they are saved in the app's folder in the Files app.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What goes over the internet</h2>
+    <p>The app only connects your phone directly to IIT Delhi's websites, as a browser would. Whatever you do on those sites, such as reading course pages, marking attendance or sending email, is handled by IIT Delhi under its own policies. Links to any other website open in your regular browser instead of the app.</p>
+  </section>
+
+  <section>
+    <h2>Camera and files</h2>
+    <p>The app asks for camera access only when you open the RollCall tab, because RollCall's attendance page scans a QR code. The camera is only available to the RollCall page. The app itself does not record, store or send camera images. You can refuse or withdraw camera access at any time in Android settings or in the iPhone Settings app.</p>
+    <p>A file is uploaded only when you pick one yourself on a portal page, for example to submit a Moodle assignment or attach a file to an email.</p>
+  </section>
+
+  <section>
+    <h2>Children</h2>
+    <p>The app is meant for IIT Delhi students and staff and is not directed at children.</p>
+  </section>
+
+  <section>
+    <h2>Changes to this policy</h2>
+    <p>If this policy changes, the new version will be posted on this page with a new effective date.</p>
+  </section>
+
+  <footer>
+    <p>Questions about this policy: contact the developer through the email address shown on the app's Google Play or App Store listing.</p>
+  </footer>
+</main>
+</body>
+</html>
