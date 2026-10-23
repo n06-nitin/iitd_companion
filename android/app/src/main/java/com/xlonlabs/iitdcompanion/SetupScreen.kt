@@ -45,7 +45,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun SetupScreen(initial: Creds?, onSaved: (Creds) -> Unit, onCancel: (() -> Unit)?) {
     var kerberos by remember { mutableStateOf(initial?.kerberos ?: "") }
-    var password by remember { mutableStateOf(initial?.password ?: "") }
+    // the saved password is never put back on screen; leaving the field blank keeps it
+    var password by remember { mutableStateOf("") }
     var show by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -97,7 +98,7 @@ fun SetupScreen(initial: Creds?, onSaved: (Creds) -> Unit, onCancel: (() -> Unit
                         value = password,
                         onValueChange = { password = it; error = null },
                         label = "Password",
-                        placeholder = "Kerberos password",
+                        placeholder = if (initial != null) "Leave blank to keep saved" else "Kerberos password",
                         keyboardType = KeyboardType.Password,
                         visual = if (show) VisualTransformation.None else PasswordVisualTransformation('•'),
                         trailing = {
@@ -126,9 +127,12 @@ fun SetupScreen(initial: Creds?, onSaved: (Creds) -> Unit, onCancel: (() -> Unit
                         contentColor = Ink,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        if (kerberos.isBlank() || password.isBlank()) {
+                        val id = kerberos.trim()
+                        // a different account needs its own password
+                        val keep = initial?.takeIf { password.isEmpty() && it.kerberos == id }?.password
+                        if (id.isEmpty() || (password.isBlank() && keep == null)) {
                             error = "Enter your Kerberos ID and password."
-                        } else onSaved(Creds(kerberos.trim(), password))
+                        } else onSaved(Creds(id, keep ?: password))
                     }
                     if (onCancel != null) {
                         Spacer(Modifier.height(8.dp))
@@ -156,7 +160,7 @@ fun SetupScreen(initial: Creds?, onSaved: (Creds) -> Unit, onCancel: (() -> Unit
 @Composable
 private fun PortalDots() {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Portal.entries.forEach { p ->
+        Portal.dock.forEach { p ->
             Box(Modifier.size(8.dp).clip(CircleShape).clay(p.accent, radius = 4.dp, depth = 0.dp))
         }
     }

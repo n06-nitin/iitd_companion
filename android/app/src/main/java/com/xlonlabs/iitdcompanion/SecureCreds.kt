@@ -16,7 +16,10 @@ import javax.crypto.spec.GCMParameterSpec
  * leaves the keystore; only ciphertext is written to SharedPreferences.
  * No third-party crypto dependency, so the APK stays tiny.
  */
-data class Creds(val kerberos: String, val password: String)
+data class Creds(val kerberos: String, val password: String) {
+    // never let the password reach a log, crash report or string template
+    override fun toString() = "Creds(kerberos=$kerberos, password=••••)"
+}
 
 object SecureCreds {
     private const val PREFS = "rch_secure"

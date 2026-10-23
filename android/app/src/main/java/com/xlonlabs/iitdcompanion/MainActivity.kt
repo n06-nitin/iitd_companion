@@ -59,10 +59,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -92,6 +94,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -174,6 +177,7 @@ private fun App() {
 }
 
 private fun clearWebData() {
+    Demo.reset()
     CookieManager.getInstance().removeAllCookies(null)
     WebStorage.getInstance().deleteAllData()
 }
@@ -184,12 +188,12 @@ private fun clearWebData() {
 private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () -> Unit) {
     val ctx = LocalContext.current
     val prefs = remember { ctx.getSharedPreferences("ui", Context.MODE_PRIVATE) }
-    val sessions = remember(creds) { Portal.entries.associateWith { PortalSession(it, creds) } }
+    val sessions = remember(creds) { Portal.dock.associateWith { PortalSession(it, creds) } }
     DisposableEffect(sessions) { onDispose { sessions.values.forEach { it.destroy() } } }
 
     val scope = rememberCoroutineScope()
     val swiper = remember {
-        TabSwiper(scope, Portal.entries.firstOrNull { it.name == prefs.getString("lastTab", null) } ?: Portal.entries.first())
+        TabSwiper(scope, Portal.dock.firstOrNull { it.name == prefs.getString("lastTab", null) } ?: Portal.dock.first())
     }
     val tab = swiper.current
     // Tabs with a live WebView. Only the open tab gets one at launch; once its page
@@ -199,10 +203,11 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
     LaunchedEffect(sessions) {
         val first = sessions.getValue(tab)
         withTimeoutOrNull(3000) { snapshotFlow { first.painted }.first { it } }
-        Portal.entries.sortedByDescending { it.autoLogin }.forEach {
+        Portal.dock.sortedByDescending { it.autoLogin }.forEach {
             if (it !in opened) {
                 delay(700)
-                opened += it
+                // the user may have opened it during the wait; a second face would fight over its WebView
+                if (it !in opened) opened += it
             }
         }
     }
@@ -249,77 +254,140 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
         else (ctx as? Activity)?.moveTaskToBack(true) // keep the sessions alive
     }
 
-    val keyboardUp = WindowInsets.isImeVisible
-    Column(Modifier.fillMaxSize().imePadding()) {
-        TopBar(
-            session = sessions.getValue(swiper.visual),
-            onEditCreds = onEditCreds,
-            onForget = onForget,
-            modifier = Modifier.swipeTabs(swiper),
-        )
+    // a portal opened from the ⋮ menu, shown over the tabs
+    var more by remember { mutableStateOf<Portal?>(null) }
 
-        BoxWithConstraints(
-            Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .clipToBounds()
-                .swipePages(
-                    swiper,
-                    onDown = { sessions.getValue(swiper.current).touchStarted() },
-                    pageWants = { dir ->
-                        val s = sessions.getValue(swiper.current)
-                        s.touchBusy || (s.pagePans != false && s.webView?.canScrollHorizontally(dir) == true)
-                    }
-                )
-        ) {
-            val width = constraints.maxWidth.toFloat()
-            SideEffect { swiper.width = width }
-            opened.forEach { p ->
-                key(p) {
-                    val s = sessions.getValue(p)
-                    Box(
-                        Modifier.fillMaxSize().graphicsLayer {
-                            // cube turn: each page hinges on the edge it shares with its neighbour
-                            val pos = swiper.positionOf(p)
-                            if (pos == null) {
-                                alpha = 0f
-                                return@graphicsLayer
-                            }
-                            translationX = pos * size.width
-                            rotationY = 90f * pos
-                            transformOrigin = TransformOrigin(if (pos < 0f) 1f else 0f, 0.5f)
-                            cameraDistance = 16f * density
-                            val depth = 1f - 0.14f * sin(PI.toFloat() * abs(pos))
-                            scaleX = depth
-                            scaleY = depth
+    val keyboardUp = WindowInsets.isImeVisible
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().imePadding()) {
+            TopBar(
+                session = sessions.getValue(swiper.visual),
+                onEditCreds = onEditCreds,
+                onForget = onForget,
+                onOpen = { more = it },
+                modifier = Modifier.swipeTabs(swiper),
+            )
+
+            BoxWithConstraints(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .clipToBounds()
+                    .swipePages(
+                        swiper,
+                        onDown = { sessions.getValue(swiper.current).touchStarted() },
+                        pageWants = { dir ->
+                            val s = sessions.getValue(swiper.current)
+                            s.touchBusy || (s.pagePans != false && s.webView?.canScrollHorizontally(dir) == true)
                         }
-                    ) {
-                        AndroidView(
-                            modifier = Modifier.fillMaxSize(),
-                            factory = { c ->
-                                // the WebView outlives this AndroidView; a recreated one must take it from the old holder
-                                s.webView(c, chooseFile).also { (it.parent as? ViewGroup)?.removeView(it) }
-                            },
-                            update = {
-                                it.visibility = if (p == tab || p == swiper.target) View.VISIBLE else View.GONE
+                    )
+            ) {
+                val width = constraints.maxWidth.toFloat()
+                SideEffect { swiper.width = width }
+                opened.forEach { p ->
+                    key(p) {
+                        val s = sessions.getValue(p)
+                        Box(
+                            Modifier.fillMaxSize().graphicsLayer {
+                                // cube turn: each page hinges on the edge it shares with its neighbour
+                                val pos = swiper.positionOf(p)
+                                if (pos == null) {
+                                    alpha = 0f
+                                    return@graphicsLayer
+                                }
+                                translationX = pos * size.width
+                                rotationY = 90f * pos
+                                transformOrigin = TransformOrigin(if (pos < 0f) 1f else 0f, 0.5f)
+                                cameraDistance = 16f * density
+                                val depth = 1f - 0.14f * sin(PI.toFloat() * abs(pos))
+                                scaleX = depth
+                                scaleY = depth
                             }
-                        )
-                        if (!s.painted) LoadingFace(p)
+                        ) {
+                            AndroidView(
+                                modifier = Modifier.fillMaxSize(),
+                                factory = { c ->
+                                    // the WebView outlives this AndroidView; a recreated one must take it from the old holder
+                                    s.webView(c, chooseFile).also { (it.parent as? ViewGroup)?.removeView(it) }
+                                },
+                                update = {
+                                    it.visibility = if (p == tab || p == swiper.target) View.VISIBLE else View.GONE
+                                }
+                            )
+                            if (!s.painted) LoadingFace(p)
+                        }
                     }
                 }
             }
+
+            if (!keyboardUp) {
+                if (tab == Portal.ROLLCALL) RollCallBar(session)
+                TabBar(
+                    swiper = swiper,
+                    sessions = sessions,
+                    // tapping the open tab again goes back to that portal's home page
+                    onSelect = { p -> if (p == tab) sessions.getValue(p).home() else swiper.goTo(p) }
+                )
+            }
         }
 
-        if (!keyboardUp) {
-            if (tab == Portal.ROLLCALL) RollCallBar(session)
-            TabBar(
-                swiper = swiper,
-                sessions = sessions,
-                // tapping the open tab again goes back to that portal's home page
-                onSelect = { p -> if (p == tab) sessions.getValue(p).home() else swiper.goTo(p) }
-            )
+        AnimatedContent(
+            targetState = more,
+            transitionSpec = {
+                (fadeIn(tween(250)) + slideInVertically(tween(300)) { it / 12 }).togetherWith(fadeOut(tween(200)))
+            },
+            label = "more"
+        ) { p ->
+            if (p != null) MoreSheet(p, creds, chooseFile, onClose = { more = null })
+        }
+    }
+}
+
+/**
+ * A portal from the ⋮ menu, over the tabs. Its WebView exists only while it's
+ * open, so the tabs keep their memory; back steps through its pages, then closes it.
+ */
+@Composable
+private fun MoreSheet(portal: Portal, creds: Creds, chooseFile: FileChooser, onClose: () -> Unit) {
+    val s = remember(portal, creds) { PortalSession(portal, creds) }
+    DisposableEffect(s) { onDispose { s.destroy() } }
+    BackHandler {
+        val wv = s.webView
+        if (wv != null && wv.canGoBack()) wv.goBack() else onClose()
+    }
+    val (label, dot) = statusOf(s)
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(Ink)
+            // be hit-testable everywhere, so touches never reach the tabs underneath
+            .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
+            .imePadding()
+    ) {
+        Column(Modifier.fillMaxWidth().statusBarsPadding()) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                StatusPill(label, dot, Modifier.weight(1f))
+                ClayIconButton(Icons.Rounded.Refresh, "Reload") { s.reload() }
+                ClayIconButton(Icons.Rounded.Close, "Close", onClose)
+            }
+            PageProgress(s)
+        }
+        Box(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
+                .clip(RoundedCornerShape(24.dp))
+        ) {
+            AndroidView(modifier = Modifier.fillMaxSize(), factory = { c -> s.webView(c, chooseFile) })
+            if (!s.painted) LoadingFace(portal)
         }
     }
 }
@@ -343,9 +411,10 @@ private fun statusOf(s: PortalSession): Pair<String, Color> = when {
     s.page == "loading" -> "Loading ${s.portal.label}…" to Caution
     s.page == "landing" || s.page == "loggedout" -> "Opening login…" to Caution
     s.page == "login" && s.captchaPending ->
-        (if (s.portal == Portal.ROLLCALL) "Type the CAPTCHA, then Login" else "Answer the CAPTCHA, then Go") to s.portal.accent
+        // no LoginForm means the IITD OAuth page (RollCall, eAcademics)
+        (if (s.portal.login == null) "Type the CAPTCHA, then Login" else "Answer the CAPTCHA, then Go") to s.portal.accent
     s.page == "login" -> "Signing in…" to Caution
-    s.page == "home" -> "Pick a course below" to s.portal.accent
+    s.page == "home" && s.portal == Portal.ROLLCALL -> "Pick a course below" to s.portal.accent
     else -> s.portal.label to s.portal.accent
 }
 
@@ -354,6 +423,7 @@ private fun TopBar(
     session: PortalSession,
     onEditCreds: () -> Unit,
     onForget: () -> Unit,
+    onOpen: (Portal) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val ctx = LocalContext.current
@@ -379,19 +449,34 @@ private fun TopBar(
                         onClick = { menuOpen = false; onEditCreds() })
                     DropdownMenuItem(text = { Text("Forget login & sign out") },
                         onClick = { menuOpen = false; onForget() })
+                    HorizontalDivider(Modifier.padding(vertical = 4.dp), color = Faint)
+                    Text("MORE", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
+                    Portal.more.forEach { p ->
+                        DropdownMenuItem(
+                            text = { Text(p.label) },
+                            leadingIcon = { Icon(p.icon, contentDescription = null, tint = p.accent) },
+                            onClick = { menuOpen = false; onOpen(p) }
+                        )
+                    }
                 }
             }
         }
-        // thin page-load bar in the portal's hue; the spacer keeps the layout from jumping
-        if (session.progress in 1..99) {
-            LinearProgressIndicator(
-                progress = { session.progress / 100f },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(2.dp).clip(CircleShape),
-                color = session.portal.accent, trackColor = Color.Transparent,
-            )
-        } else Spacer(Modifier.height(2.dp))
-        Spacer(Modifier.height(6.dp))
+        PageProgress(session)
     }
+}
+
+/** Thin page-load bar in the portal's hue; the spacer keeps the layout from jumping. */
+@Composable
+private fun PageProgress(session: PortalSession) {
+    if (session.progress in 1..99) {
+        LinearProgressIndicator(
+            progress = { session.progress / 100f },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(2.dp).clip(CircleShape),
+            color = session.portal.accent, trackColor = Color.Transparent,
+        )
+    } else Spacer(Modifier.height(2.dp))
+    Spacer(Modifier.height(6.dp))
 }
 
 /**
@@ -410,7 +495,7 @@ private fun TabBar(swiper: TabSwiper, sessions: Map<Portal, PortalSession>, onSe
             .padding(6.dp)
     ) {
         BoxWithConstraints(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp))) {
-            val itemWidth = maxWidth / Portal.entries.size
+            val itemWidth = maxWidth / Portal.dock.size
             // one pill per lap: when the ring wraps, it slides off one end and in at the other
             for (lap in -1..1) {
                 Box(
@@ -421,7 +506,7 @@ private fun TabBar(swiper: TabSwiper, sessions: Map<Portal, PortalSession>, onSe
                             val h = DockHeight.roundToPx()
                             val placeable = measurable.measure(Constraints.fixed(w, h))
                             layout(w, h) {
-                                val slot = swiper.indicator() + lap * Portal.entries.size
+                                val slot = swiper.indicator() + lap * Portal.dock.size
                                 placeable.place((itemWidth.toPx() * (slot + 0.5f) - w / 2f).roundToInt(), 0)
                             }
                         }
@@ -430,7 +515,7 @@ private fun TabBar(swiper: TabSwiper, sessions: Map<Portal, PortalSession>, onSe
                 )
             }
             Row(Modifier.fillMaxWidth().height(DockHeight)) {
-                Portal.entries.forEach { p ->
+                Portal.dock.forEach { p ->
                     val active = p == swiper.visual
                     val s = sessions.getValue(p)
                     // needs you: waiting for a CAPTCHA, or auto sign-in failed

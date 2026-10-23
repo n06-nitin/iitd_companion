@@ -10,6 +10,7 @@ import org.json.JSONObject
  *
  * Selectors come from the site's real markup:
  *   landing: <button ... onclick="location.href='.../authorize.php?...'">Login via IITD OAuth</button>
+ *   eAcademics landing: <a href="https://oauth.iitd.ac.in/authorize.php?...">Click here to login</a>
  *   login:   <input name="username">, <input name="password">, <input name="ct_captcha" id="captcha_code">
  */
 object RollCallScript {
@@ -50,7 +51,8 @@ object RollCallScript {
       || !!pick("#captcha_code","input[name='captcha']","img.captcha-image","input.captcha-field","input[type='password']");
   }
   function loginBtnEl(){
-    return pick("button[onclick*='authorize.php']","button[onclick*='oauth.iitd.ac.in']") || byText('Login via IITD OAuth');
+    return pick("button[onclick*='authorize.php']","button[onclick*='oauth.iitd.ac.in']","a[href*='oauth.iitd.ac.in/authorize.php']")
+      || byText('Login via IITD OAuth');
   }
   function detect(){
     if (isLogin()) return 'login';

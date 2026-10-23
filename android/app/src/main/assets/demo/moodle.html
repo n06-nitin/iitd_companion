@@ -1,0 +1,72 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard</title>
+<link rel="stylesheet" href="/_demo/demo.css">
+<style>
+.courses{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.course{display:block;background:#fff;border:1px solid #dee2e6;border-radius:10px;overflow:hidden;color:inherit}
+.course .band{height:64px;background:var(--accent);opacity:.85}
+.course .t{padding:10px 12px}.course .code{font-size:12px;color:#6a737b}.course .name{font-weight:600}
+.section h3{margin-top:4px}
+.act{display:flex;gap:10px;align-items:center;padding:10px 2px;border-top:1px solid #eceef0;color:inherit}
+.act:first-of-type{border-top:0}
+.ic{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;font-size:15px;flex:none;background:#eef1f4}
+.crumb{font-size:13px;margin-bottom:10px}
+</style>
+<script>document.documentElement.style.setProperty('--accent',location.hostname.indexOf('moodlenew')===0?'#1a7f6e':'#d46b08')</script>
+</head><body class="loggedin">
+<div class="demo-banner">Demo mode · sample data, nothing is sent to IIT Delhi</div>
+<div class="topbar"><span class="brand" id="site"></span><a href="/my/">Dashboard</a><a href="/login/logout.php">Log out</a></div>
+<div class="wrap" id="app"></div>
+<script>
+var NEW=location.hostname.indexOf('moodlenew')===0;
+document.getElementById('site').textContent=NEW?'Moodle New':'Moodle';
+var COURSES=NEW?[
+ {id:11,code:'MCL211',name:'Design of Machines'},
+ {id:12,code:'MCL134',name:'Metrology'},
+ {id:13,code:'COL106',name:'Data Structures and Algorithms'},
+ {id:14,code:'HUL261',name:'Introduction to Psychology'}
+]:[
+ {id:21,code:'MTL100',name:'Calculus'},
+ {id:22,code:'PYL101',name:'Electromagnetics'},
+ {id:23,code:'APL100',name:'Engineering Mechanics'}
+];
+var DUE=[{c:0,what:'Assignment 2 is due',when:'Fri, 10 Oct · 11:59 PM'},{c:1,what:'Quiz 1 opens',when:'Mon, 13 Oct · 9:00 AM'},{c:2,what:'Lab report 3 is due',when:'Wed, 15 Oct · 5:00 PM'}];
+var q=new URLSearchParams(location.search), app=document.getElementById('app'), path=location.pathname;
+function course(id){return COURSES.filter(function(c){return String(c.id)===String(id)})[0]||COURSES[0]}
+function act(ic,title,href,note){return '<a class="act" href="'+href+'"><span class="ic">'+ic+'</span><span><div>'+title+'</div>'+(note?'<div class="muted">'+note+'</div>':'')+'</span></a>'}
+if(path.indexOf('/course/view.php')===0){
+  var c=course(q.get('id')); document.title=c.code+': '+c.name;
+  app.innerHTML='<div class="crumb"><a href="/my/">Dashboard</a> › '+c.code+'</div><h1>'+c.code+': '+c.name+'</h1>'
+   +'<div class="card section">'+act('📢','Announcements','/mod/forum/view.php?c='+c.id)+'</div>'
+   +'<div class="card section"><h3>Week 1 · Introduction</h3>'
+     +act('📄','Lecture 1 slides','/_demo/Lecture-01.pdf','PDF · tap to download')
+     +act('📝','Tutorial sheet 1','/_demo/Lecture-01.pdf','PDF')
+   +'</div><div class="card section"><h3>Week 2</h3>'
+     +act('📥','Assignment 2','/mod/assign/view.php?id=2&c='+c.id,'Due Fri, 10 Oct · 11:59 PM')
+     +act('✅','Quiz 1','/mod/quiz/view.php?c='+c.id,'Opens Mon, 13 Oct')
+   +'</div>';
+} else if(path.indexOf('/mod/assign/')===0){
+  var c=course(q.get('c')); document.title='Assignment 2';
+  app.innerHTML='<div class="crumb"><a href="/my/">Dashboard</a> › <a href="/course/view.php?id='+c.id+'">'+c.code+'</a> › Assignment 2</div><h1>Assignment 2</h1>'
+   +'<div class="card"><p>Solve the problems in the attached sheet and upload a single PDF.</p>'
+   +'<table><tr><th>Submission status</th><td>No attempt</td></tr><tr><th>Grading status</th><td>Not graded</td></tr>'
+   +'<tr><th>Due date</th><td>Friday, 10 October, 11:59 PM</td></tr><tr><th>Time remaining</th><td>4 days</td></tr></table>'
+   +'<p class="muted" style="margin-top:14px">Uploading is turned off in demo mode.</p></div>';
+} else if(path.indexOf('/mod/quiz/')===0){
+  var c=course(q.get('c')); document.title='Quiz 1';
+  app.innerHTML='<div class="crumb"><a href="/my/">Dashboard</a> › <a href="/course/view.php?id='+c.id+'">'+c.code+'</a> › Quiz 1</div><h1>Quiz 1</h1>'
+   +'<div class="card"><p>The quiz will open on Monday, 13 October, 9:00 AM.</p><p class="muted">Time limit: 30 mins · Attempts allowed: 1</p></div>';
+} else if(path.indexOf('/mod/forum/')===0){
+  var c=course(q.get('c')); document.title='Announcements';
+  app.innerHTML='<div class="crumb"><a href="/my/">Dashboard</a> › <a href="/course/view.php?id='+c.id+'">'+c.code+'</a> › Announcements</div><h1>Announcements</h1>'
+   +'<div class="card"><h3>Tutorial 3 uploaded</h3><div class="muted">by Course Team · Today</div><p>Tutorial sheet 3 is now available under Week 3.</p></div>'
+   +'<div class="card"><h3>Welcome to '+c.code+'</h3><div class="muted">by Course Team · 28 Sep</div><p>Lecture slides will be posted here after each class.</p></div>';
+} else {
+  app.innerHTML='<h1>Dashboard</h1><div class="card"><h3>Timeline</h3>'
+   +DUE.filter(function(d){return COURSES[d.c]}).map(function(d){var c=COURSES[d.c];return act('🗓️',d.what,'/course/view.php?id='+c.id,c.code+' · '+d.when)}).join('')+'</div>'
+   +'<h2>My courses</h2><div class="courses">'+COURSES.map(function(c){
+      return '<a class="course" href="/course/view.php?id='+c.id+'"><div class="band"></div><div class="t"><div class="code">'+c.code+'</div><div class="name">'+c.name+'</div></div></a>'}).join('')+'</div>';
+}
+</script>
+</body></html>

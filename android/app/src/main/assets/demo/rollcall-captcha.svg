@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="60" viewBox="0 0 180 60">
+<rect width="180" height="60" fill="#f3f1ea"/>
+<path d="M0 38 C40 10 70 55 110 25 S160 40 180 18" stroke="#b9a98a" stroke-width="2" fill="none"/>
+<path d="M0 16 C50 40 90 8 130 44 S170 30 180 46" stroke="#c7b9a0" stroke-width="1.5" fill="none"/>
+<g font-family="Georgia, serif" font-size="34" font-weight="bold" fill="#3b3326">
+<text x="18" y="43" transform="rotate(-8 30 40)">R</text>
+<text x="50" y="40" transform="rotate(6 60 38)">7</text>
+<text x="80" y="45" transform="rotate(-5 90 40)">K</text>
+<text x="112" y="40" transform="rotate(9 122 38)">4</text>
+<text x="142" y="44" transform="rotate(-7 152 40)">P</text>
+</g>
+<g fill="#8f8270"><circle cx="25" cy="12" r="1.5"/><circle cx="70" cy="52" r="1.5"/><circle cx="104" cy="10" r="1.5"/><circle cx="150" cy="54" r="1.5"/><circle cx="165" cy="9" r="1.5"/></g>
+</svg>

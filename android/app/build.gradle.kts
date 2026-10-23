@@ -19,8 +19,8 @@ android {
         applicationId = "com.xlonlabs.iitdcompanion"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.0"
+        versionCode = 5
+        versionName = "1.1.1"
         vectorDrawables { useSupportLibrary = true }
     }
 

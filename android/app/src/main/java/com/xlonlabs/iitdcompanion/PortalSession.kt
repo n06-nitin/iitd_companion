@@ -12,6 +12,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.ViewGroup
+import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
@@ -19,11 +20,13 @@ import android.webkit.URLUtil
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoStories
+import androidx.compose.material.icons.rounded.HistoryEdu
 import androidx.compose.material.icons.rounded.Mail
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.School
@@ -45,6 +48,8 @@ enum class Portal(
     val icon: ImageVector,
     /** Each portal's own hue: the dock pill, status dot and loading bar take it on. */
     val accent: Color,
+    /** A tab in the dock; the rest open on demand from the ⋮ menu. */
+    val inDock: Boolean = true,
 ) {
     WEBMAIL("Webmail", "https://webmail.iitd.ac.in/",
         setOf("webmail.iitd.ac.in"), LoginForm.WEBMAIL, Icons.Rounded.Mail, Color(0xFF6FA6F2)),
@@ -53,11 +58,19 @@ enum class Portal(
     MOODLE("Moodle", "https://moodle.iitd.ac.in/my/",
         setOf("moodle.iitd.ac.in"), LoginForm.MOODLE, Icons.Rounded.School, Color(0xFFF0913A)),
     ROLLCALL("RollCall", "https://rollcall.iitd.ac.in/index.php",
-        setOf("oauth.iitd.ac.in", "rollcall.iitd.ac.in"), null, Icons.Rounded.QrCodeScanner, Color(0xFF7CCB6E));
+        setOf("oauth.iitd.ac.in", "rollcall.iitd.ac.in"), null, Icons.Rounded.QrCodeScanner, Color(0xFF7CCB6E)),
+    // signs in through the same IITD OAuth page as RollCall, so it reuses that script; only reachable on the intranet / VPN
+    EACADEMICS("eAcademics", "https://eacademics.iitd.ac.in/sportal/login",
+        setOf("oauth.iitd.ac.in"), null, Icons.Rounded.HistoryEdu, Color(0xFFE0675A), inDock = false);
 
     /** No CAPTCHA on the login form, so the app presses "Log in" itself. */
     val autoLogin get() = login != null && login.captcha == null
     val bootstrap get() = login?.bootstrap ?: RollCallScript.BOOTSTRAP
+
+    companion object {
+        val dock = entries.filter { it.inDock }
+        val more = entries.filterNot { it.inDock }
+    }
 }
 
 typealias FileChooser = (ValueCallback<Array<Uri>>, WebChromeClient.FileChooserParams) -> Boolean
@@ -67,6 +80,8 @@ typealias FileChooser = (ValueCallback<Array<Uri>>, WebChromeClient.FileChooserP
  * Compose reads the mutable-state fields; the WebView outlives tab switches.
  */
 class PortalSession(val portal: Portal, private val creds: Creds) {
+    /** Signed in with the demo login: the tab is served by [Demo], not the real portal. */
+    private val demo = Demo.isDemo(creds)
     var webView: WebView? = null
         private set
     var page by mutableStateOf("loading")
@@ -145,6 +160,9 @@ class PortalSession(val portal: Portal, private val creds: Creds) {
         webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView, newProgress: Int) { this@PortalSession.progress = newProgress }
 
+            // keep page console output out of logcat; the login pages handle the password
+            override fun onConsoleMessage(message: ConsoleMessage) = true
+
             override fun onPermissionRequest(request: PermissionRequest) {
                 // only RollCall's QR scanner gets the camera
                 if (portal == Portal.ROLLCALL && PermissionRequest.RESOURCE_VIDEO_CAPTURE in request.resources)
@@ -156,7 +174,11 @@ class PortalSession(val portal: Portal, private val creds: Creds) {
                 view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams,
             ) = chooseFile(callback, params)
         }
+        val appCtx = ctx.applicationContext
         webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
+                if (demo) Demo.serve(appCtx, request.url) else null
+
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 if (!request.isForMainFrame || isIitd(request.url)) return false
                 openExternally(view.context, request.url)
@@ -182,7 +204,9 @@ class PortalSession(val portal: Portal, private val creds: Creds) {
             }
         }
         setDownloadListener { url, userAgent, disposition, mime, _ ->
-            download(context, url, userAgent, disposition, mime)
+            if (!demo) download(context, url, userAgent, disposition, mime)
+            else Toast.makeText(context, Demo.saveDownload(context, url)?.let { "Saved $it to Downloads" }
+                ?: "Couldn't download this file", Toast.LENGTH_SHORT).show()
         }
         loadUrl(portal.home)
         webView = this

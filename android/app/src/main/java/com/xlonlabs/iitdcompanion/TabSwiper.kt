@@ -36,7 +36,7 @@ import kotlin.math.sign
  */
 @Stable
 class TabSwiper(private val scope: CoroutineScope, initial: Portal) {
-    private val tabs = Portal.entries
+    private val tabs = Portal.dock
 
     var current by mutableStateOf(initial)
         private set
