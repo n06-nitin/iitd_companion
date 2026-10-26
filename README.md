@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="android/store/icon-512.png" alt="IITD Companion app icon" width="112">
+<img src="docs/images/icon-512.png" alt="IITD Companion app icon" width="112">
 
 # IITD Companion
 
@@ -16,7 +16,7 @@ A free, open-source Android and iPhone app for IIT Delhi students. It signs you 
 ![Swift](https://img.shields.io/badge/Swift-SwiftUI-F05138?logo=swift&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue)
 
-<img src="android/store/feature-1024x500.png" alt="IITD Companion: IIT Delhi Webmail, Moodle New, Moodle and RollCall in one app" width="720">
+<img src="docs/images/feature-1024x500.png" alt="IITD Companion: IIT Delhi Webmail, Moodle New, Moodle and RollCall in one app" width="720">
 
 </div>
 
@@ -29,11 +29,11 @@ It is made by an IIT Delhi student, for IIT Delhi students: [Nitin Singh](#about
 ## Screenshots
 
 <p align="center">
-  <img src="android/store/screenshot-1-login.png" alt="Save your Kerberos ID once" width="160">
-  <img src="android/store/screenshot-2-autosign.png" alt="Automatic sign-in to IIT Delhi Webmail and Moodle New" width="160">
-  <img src="android/store/screenshot-3-swipe.png" alt="Swipe between IIT Delhi portals" width="160">
-  <img src="android/store/screenshot-4-captcha.png" alt="Type only the CAPTCHA on Moodle and RollCall" width="160">
-  <img src="android/store/screenshot-5-rollcall.png" alt="RollCall QR attendance scanner" width="160">
+  <img src="docs/images/screenshot-1-login.png" alt="Save your Kerberos ID once" width="160">
+  <img src="docs/images/screenshot-2-autosign.png" alt="Automatic sign-in to IIT Delhi Webmail and Moodle New" width="160">
+  <img src="docs/images/screenshot-3-swipe.png" alt="Swipe between IIT Delhi portals" width="160">
+  <img src="docs/images/screenshot-4-captcha.png" alt="Type only the CAPTCHA on Moodle and RollCall" width="160">
+  <img src="docs/images/screenshot-5-rollcall.png" alt="RollCall QR attendance scanner" width="160">
 </p>
 
 ## Features

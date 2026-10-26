@@ -17,3 +17,6 @@ keystore.properties
 # local Claude Code settings
 .claude/
 .kotlin/
+
+# store/social assets kept local
+StoreListing/
