@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>e-Academics · Student Portal</title>
+<link rel="stylesheet" href="/_demo/demo.css">
+<style>
+:root{--accent:#c0392b}
+.menu{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 0}
+.menu a{white-space:nowrap;font-size:14px;padding:6px 12px;border-radius:16px;background:#f7e4e1;color:#a5281b}
+.menu a.sel{background:#c0392b;color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:14px}
+.grid .k{color:#6a737b}
+</style>
+</head><body>
+<div class="demo-banner">Demo mode · sample data, nothing is sent to IIT Delhi</div>
+<div class="topbar"><span class="brand">e-Academics</span><a href="/sportal/login?logout">Logout</a></div>
+<div id="app"></div>
+<script>
+var COURSES=[
+ {code:'MCL211',name:'Design of Machines',cr:4,slot:'B',grade:'—'},
+ {code:'MCL134',name:'Metrology',cr:3,slot:'D',grade:'—'},
+ {code:'COL106',name:'Data Structures and Algorithms',cr:5,slot:'F',grade:'—'},
+ {code:'HUL261',name:'Introduction to Psychology',cr:4,slot:'M',grade:'—'}
+];
+var PAST=[
+ {sem:'Semester II, 2025-26',sgpa:'8.6',rows:[['MTL100','Calculus','A'],['PYL101','Electromagnetics','A-'],['APL100','Engineering Mechanics','B']]}
+];
+var tab=new URLSearchParams(location.search).get('tab')||'home', app=document.getElementById('app');
+function menu(){return '<div class="menu">'+[['home','Home'],['courses','Registered courses'],['grades','Grade card'],['adddrop','Add / Drop']]
+  .map(function(t){return '<a class="'+(t[0]===tab?'sel':'')+'" href="/sportal/home?tab='+t[0]+'">'+t[1]+'</a>'}).join('')+'</div>'}
+function table(head,rows){return '<table><tr>'+head.map(function(h){return '<th>'+h+'</th>'}).join('')+'</tr>'
+  +rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>'}).join('')+'</tr>'}).join('')+'</table>'}
+var body;
+if(tab==='courses'){
+  body='<div class="card"><h2>Registered courses · Semester I, 2026-27</h2>'
+    +table(['Course','Title','Credits','Slot'],COURSES.map(function(c){return [c.code,c.name,c.cr,c.slot]}))+'</div>';
+} else if(tab==='grades'){
+  body=PAST.map(function(s){return '<div class="card"><h2>'+s.sem+'</h2>'+table(['Course','Title','Grade'],s.rows)
+    +'<p class="muted" style="margin:12px 0 0">SGPA '+s.sgpa+'</p></div>'}).join('');
+} else if(tab==='adddrop'){
+  body='<div class="card"><h2>Add / Drop</h2><p>The add/drop window for Semester I, 2026-27 is closed.</p>'
+    +'<p class="muted">Next window: Semester II registration, January.</p></div>';
+} else {
+  body='<div class="card"><h2>Welcome, Demo Student</h2><div class="grid">'
+    +'<span class="k">Entry number</span><span>2024ME10000</span>'
+    +'<span class="k">Programme</span><span>B.Tech, Mechanical Engineering</span>'
+    +'<span class="k">Current semester</span><span>Semester I, 2026-27</span>'
+    +'<span class="k">Registered credits</span><span>'+COURSES.reduce(function(a,c){return a+c.cr},0)+'</span>'
+    +'<span class="k">CGPA</span><span>8.42</span></div></div>'
+    +'<div class="card"><h3>Notices</h3><ul class="list">'
+    +'<li><a href="/sportal/home?tab=courses">Course registration for Semester I is complete</a></li>'
+    +'<li><a href="/sportal/home?tab=grades">Grades for Semester II, 2025-26 are published</a></li></ul></div>';
+}
+app.innerHTML=menu()+'<div class="wrap">'+body+'</div>';
+</script>
+</body></html>

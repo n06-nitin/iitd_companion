@@ -3,9 +3,13 @@ import Security
 
 /// Credentials live in the iOS Keychain, readable only on this device once it
 /// has been unlocked after boot. They never sync to iCloud or leave the phone.
-struct Creds: Equatable, Hashable {
+struct Creds: Equatable, Hashable, CustomStringConvertible, CustomDebugStringConvertible {
     let kerberos: String
     let password: String
+
+    // never let the password reach a log, crash report or string interpolation
+    var description: String { "Creds(kerberos: \(kerberos), password: ••••)" }
+    var debugDescription: String { description }
 }
 
 enum SecureCreds {

@@ -17,7 +17,8 @@ struct SetupScreen: View {
         self.onSaved = onSaved
         self.onCancel = onCancel
         _kerberos = State(initialValue: initial?.kerberos ?? "")
-        _password = State(initialValue: initial?.password ?? "")
+        // the saved password is never put back on screen; leaving the field blank keeps it
+        _password = State(initialValue: "")
     }
 
     var body: some View {
@@ -62,7 +63,7 @@ struct SetupScreen: View {
                     Color.clear.frame(width: 16)
                 }
                 Spacer().frame(height: 14)
-                Field(text: $password, label: "Password", placeholder: "Kerberos password",
+                Field(text: $password, label: "Password", placeholder: initial != nil ? "Leave blank to keep saved" : "Kerberos password",
                       secure: !show, contentType: .password) {
                     Text(show ? "Hide" : "Show")
                         .m3(13, weight: .semibold)
@@ -85,11 +86,13 @@ struct SetupScreen: View {
 
                 Spacer().frame(height: 22)
                 ClayButton(text: "Save & continue", color: Bone, contentColor: Ink) {
-                    if kerberos.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        || password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    let id = kerberos.trimmingCharacters(in: .whitespacesAndNewlines)
+                    // a different account needs its own password
+                    let keep = password.isEmpty && initial?.kerberos == id ? initial?.password : nil
+                    if id.isEmpty || (password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && keep == nil) {
                         error = "Enter your Kerberos ID and password."
                     } else {
-                        onSaved(Creds(kerberos: kerberos.trimmingCharacters(in: .whitespacesAndNewlines), password: password))
+                        onSaved(Creds(kerberos: id, password: keep ?? password))
                     }
                 }
                 if let onCancel {
@@ -132,7 +135,7 @@ struct SetupScreen: View {
 private struct PortalDots: View {
     var body: some View {
         HStack(spacing: 10) {
-            ForEach(Portal.allCases) { p in
+            ForEach(Portal.dock) { p in
                 ClaySlab(color: p.accent, radius: 4, depth: 0)
                     .clipShape(Circle())
                     .frame(width: 8, height: 8)

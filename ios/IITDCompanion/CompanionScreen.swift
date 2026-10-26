@@ -4,6 +4,7 @@ import SwiftUI
 /// Every tab's session, the swiper, and which tabs have a live WebView.
 @Observable @MainActor
 final class CompanionModel {
+    @ObservationIgnored let creds: Creds
     @ObservationIgnored let sessions: [Portal: PortalSession]
     @ObservationIgnored let swiper: TabSwiper
     /// Tabs with a live WebView. Only the open tab gets one at launch; once its page
@@ -12,9 +13,10 @@ final class CompanionModel {
     private(set) var opened: [Portal]
 
     init(creds: Creds) {
-        sessions = Dictionary(uniqueKeysWithValues: Portal.allCases.map { ($0, PortalSession(portal: $0, creds: creds)) })
-        let last = UserDefaults.standard.string(forKey: "lastTab").flatMap(Portal.init(rawValue:))
-        let first = last ?? Portal.allCases[0]
+        self.creds = creds
+        sessions = Dictionary(uniqueKeysWithValues: Portal.dock.map { ($0, PortalSession(portal: $0, creds: creds)) })
+        let last = UserDefaults.standard.string(forKey: "lastTab").flatMap(Portal.init(rawValue:)).flatMap { Portal.dock.contains($0) ? $0 : nil }
+        let first = last ?? Portal.dock[0]
         swiper = TabSwiper(initial: first)
         opened = [first]
     }
@@ -27,7 +29,7 @@ final class CompanionModel {
         let first = session(swiper.current)
         for _ in 0..<60 where !first.painted { try? await Task.sleep(for: .milliseconds(50)) }
         // stable sort: auto sign-in portals first, otherwise in tab order
-        let order = Portal.allCases.filter(\.autoLogin) + Portal.allCases.filter { !$0.autoLogin }
+        let order = Portal.dock.filter(\.autoLogin) + Portal.dock.filter { !$0.autoLogin }
         for p in order where !opened.contains(p) {
             try? await Task.sleep(for: .milliseconds(700))
             if Task.isCancelled { return }
@@ -45,6 +47,8 @@ struct CompanionScreen: View {
     @State private var model: CompanionModel
     @State private var askedCamera = false
     @State private var keyboardUp = false
+    /// A portal opened from the ⋮ menu, shown over the tabs.
+    @State private var more: Portal?
 
     init(creds: Creds, onEditCreds: @escaping () -> Void, onForget: @escaping () -> Void) {
         self.onEditCreds = onEditCreds
@@ -56,27 +60,38 @@ struct CompanionScreen: View {
         let swiper = model.swiper
         let tab = swiper.current
         let session = model.session(tab)
-        VStack(spacing: 0) {
-            TopBar(session: model.session(swiper.visual), onEditCreds: onEditCreds, onForget: onForget)
-                .swipeTabs(swiper)
+        ZStack {
+            VStack(spacing: 0) {
+                TopBar(session: model.session(swiper.visual), onEditCreds: onEditCreds, onForget: onForget,
+                       onOpen: { p in withAnimation(tween(0.3)) { more = p } })
+                    .swipeTabs(swiper)
 
-            PagesView(model: model, opened: model.opened)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .circular))
-                .padding(.horizontal, 10)
+                PagesView(model: model, opened: model.opened)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .circular))
+                    .padding(.horizontal, 10)
 
-            if !keyboardUp {
-                if tab == .rollcall { RollCallBar(session: session) }
-                TabBar(model: model) { p in
-                    // tapping the open tab again goes back to that portal's home page
-                    if p == swiper.current { model.session(p).home() } else { swiper.goTo(p) }
+                if !keyboardUp {
+                    if tab == .rollcall { RollCallBar(session: session) }
+                    TabBar(model: model) { p in
+                        // tapping the open tab again goes back to that portal's home page
+                        if p == swiper.current { model.session(p).home() } else { swiper.goTo(p) }
+                    }
                 }
+            }
+
+            if let p = more {
+                MoreSheet(portal: p, creds: model.creds, onClose: { withAnimation(tween(0.2)) { more = nil } })
+                    .transition(.opacity.combined(with: .offset(y: 40)))
+                    .zIndex(1)
             }
         }
         .task {
             #if DEBUG
+            // simulator aid: -ICDebugOpen EACADEMICS opens a ⋮-menu portal at launch
+            if let p = UserDefaults.standard.string(forKey: "ICDebugOpen").flatMap(Portal.init(rawValue:)) { more = p }
             if UserDefaults.standard.object(forKey: "ICDebugTurn") != nil {
                 let f = UserDefaults.standard.double(forKey: "ICDebugTurn")
-                Portal.allCases.forEach(model.open)
+                Portal.dock.forEach(model.open)
                 try? await Task.sleep(for: .seconds(UserDefaults.standard.double(forKey: "ICDebugTurnDelay")))
                 swiper.freeze(at: f)
                 return
@@ -112,9 +127,10 @@ struct CompanionScreen: View {
     case "loading": return ("Loading \(s.portal.label)…", Caution)
     case "landing", "loggedout": return ("Opening login…", Caution)
     case "login" where s.captchaPending:
-        return (s.portal == .rollcall ? "Type the CAPTCHA, then Login" : "Answer the CAPTCHA, then Go", s.portal.accent)
+        // no LoginForm means the IITD OAuth page (RollCall, eAcademics)
+        return (s.portal.login == nil ? "Type the CAPTCHA, then Login" : "Answer the CAPTCHA, then Go", s.portal.accent)
     case "login": return ("Signing in…", Caution)
-    case "home": return ("Pick a course below", s.portal.accent)
+    case "home" where s.portal == .rollcall: return ("Pick a course below", s.portal.accent)
     default: return (s.portal.label, s.portal.accent)
     }
 }
@@ -123,6 +139,7 @@ private struct TopBar: View {
     let session: PortalSession
     let onEditCreds: () -> Void
     let onForget: () -> Void
+    let onOpen: (Portal) -> Void
 
     var body: some View {
         let (label, dot) = statusOf(session)
@@ -137,6 +154,11 @@ private struct TopBar: View {
                     Button("Edit saved login", action: onEditCreds)
                     Button("Forget login & sign out", action: onForget)
                     Button("Privacy policy") { openExternally(privacyPolicyURL) }
+                    Section("More") {
+                        ForEach(Portal.more) { p in
+                            Button { onOpen(p) } label: { Label(p.label, image: p.icon) }
+                        }
+                    }
                 } label: {
                     ClayIconFace {
                         Image("icon_more_vert").renderingMode(.template).resizable().frame(width: 20, height: 20)
@@ -146,18 +168,58 @@ private struct TopBar: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            // thin page-load bar in the portal's hue; the spacer keeps the layout from jumping
-            Group {
-                if (1...99).contains(session.progress) {
-                    LoadBar(fraction: CGFloat(session.progress) / 100, color: session.portal.accent)
-                } else {
-                    Color.clear
-                }
-            }
-            .frame(height: 2)
-            .padding(.horizontal, 24)
-            Spacer().frame(height: 6)
+            PageProgress(session: session)
         }
+    }
+}
+
+/// Thin page-load bar in the portal's hue; the spacer keeps the layout from jumping.
+private struct PageProgress: View {
+    let session: PortalSession
+    var body: some View {
+        Group {
+            if (1...99).contains(session.progress) {
+                LoadBar(fraction: CGFloat(session.progress) / 100, color: session.portal.accent)
+            } else {
+                Color.clear
+            }
+        }
+        .frame(height: 2)
+        .padding(.horizontal, 24)
+        Spacer().frame(height: 6)
+    }
+}
+
+/// A portal from the ⋮ menu, over the tabs. Its WebView exists only while it's
+/// open, so the tabs keep their memory; the edge swipe steps back through its pages.
+private struct MoreSheet: View {
+    let onClose: () -> Void
+    @State private var session: PortalSession
+
+    init(portal: Portal, creds: Creds, onClose: @escaping () -> Void) {
+        self.onClose = onClose
+        _session = State(initialValue: PortalSession(portal: portal, creds: creds))
+    }
+
+    var body: some View {
+        let (label, dot) = statusOf(session)
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                StatusPill(label: label, dot: dot)
+                ClayIconButton(icon: "icon_refresh", description: "Reload") { session.reload() }
+                ClayIconButton(icon: "icon_close", description: "Close", action: onClose)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            PageProgress(session: session)
+
+            SingleFace(session: session)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .circular))
+                .padding(.horizontal, 10)
+                .padding(.bottom, 10)
+        }
+        .background(ClayBackground().ignoresSafeArea())
+        .onDisappear { session.destroy() }
     }
 }
 
@@ -188,7 +250,7 @@ private struct TabBar: View {
         ZStack {
             Pills(swiper: swiper, height: dockHeight)
             HStack(spacing: 0) {
-                ForEach(Portal.allCases) { p in
+                ForEach(Portal.dock) { p in
                     TabItem(portal: p, session: model.session(p), active: p == swiper.visual)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .contentShape(Rectangle())
@@ -213,7 +275,7 @@ private struct Pills: View {
 
     var body: some View {
         GeometryReader { g in
-            let count = CGFloat(Portal.allCases.count)
+            let count = CGFloat(Portal.dock.count)
             let itemWidth = g.size.width / count
             let progress = swiper.progress
             let stretch = sin(.pi * progress)

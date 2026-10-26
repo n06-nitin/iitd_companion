@@ -5,6 +5,12 @@ import WebKit
 
 enum Portal: String, CaseIterable, Identifiable {
     case webmail = "WEBMAIL", moodleNew = "MOODLE_NEW", moodle = "MOODLE", rollcall = "ROLLCALL"
+    // signs in through the same IITD OAuth page as RollCall, so it reuses that script; only reachable on the intranet / VPN
+    case eacademics = "EACADEMICS"
+
+    /// The dock's tabs; the rest open on demand from the ⋮ menu.
+    static let dock: [Portal] = [.webmail, .moodleNew, .moodle, .rollcall]
+    static let more: [Portal] = allCases.filter { !dock.contains($0) }
 
     var id: String { rawValue }
 
@@ -14,6 +20,7 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodleNew: "Moodle New"
         case .moodle: "Moodle"
         case .rollcall: "RollCall"
+        case .eacademics: "eAcademics"
         }
     }
 
@@ -23,6 +30,7 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodleNew: URL(string: "https://moodlenew.iitd.ac.in/my/")!
         case .moodle: URL(string: "https://moodle.iitd.ac.in/my/")!
         case .rollcall: URL(string: "https://rollcall.iitd.ac.in/index.php")!
+        case .eacademics: URL(string: "https://eacademics.iitd.ac.in/sportal/login")!
         }
     }
 
@@ -33,16 +41,17 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodleNew: ["moodlenew.iitd.ac.in"]
         case .moodle: ["moodle.iitd.ac.in"]
         case .rollcall: ["oauth.iitd.ac.in", "rollcall.iitd.ac.in"]
+        case .eacademics: ["oauth.iitd.ac.in"]
         }
     }
 
-    /// nil for RollCall, which drives its own OAuth flow via `RollCallScript`.
+    /// nil for RollCall and eAcademics, which drive their own OAuth flow via `RollCallScript`.
     var login: LoginForm? {
         switch self {
         case .webmail: .webmail
         case .moodleNew: .moodleNew
         case .moodle: .moodle
-        case .rollcall: nil
+        case .rollcall, .eacademics: nil
         }
     }
 
@@ -53,6 +62,7 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodleNew: "icon_auto_stories"
         case .moodle: "icon_school"
         case .rollcall: "icon_qr_code_scanner"
+        case .eacademics: "icon_history_edu"
         }
     }
 
@@ -63,6 +73,7 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodleNew: Tone(0xFF4FC1AE)
         case .moodle: Tone(0xFFF0913A)
         case .rollcall: Tone(0xFF7CCB6E)
+        case .eacademics: Tone(0xFFE0675A)
         }
     }
 

@@ -30,7 +30,7 @@ enum Demo {
     }
 }
 
-/// A tiny stand-in for the four portals' servers. Sign-in state lives in memory
+/// A tiny stand-in for the portals' servers. Sign-in state lives in memory
 /// per host, like a session cookie; it resets when the app restarts or the login
 /// is forgotten. Pages are templates in Resources/Demo with `{{…}}` slots.
 @MainActor
@@ -61,6 +61,7 @@ final class DemoServer: NSObject, WKURLSchemeHandler {
             case "webmail.iitd.ac.in": reply = webmail(query)
             case "moodle.iitd.ac.in", "moodlenew.iitd.ac.in": reply = moodle(host, path, query)
             case "rollcall.iitd.ac.in": reply = rollcall(path)
+            case "eacademics.iitd.ac.in": reply = eacademics(path, query)
             case "oauth.iitd.ac.in": reply = oauth(query)
             default: reply = .notFound
             }
@@ -129,16 +130,34 @@ final class DemoServer: NSObject, WKURLSchemeHandler {
         return signedIn.contains(host) ? page("rollcall") : page("rollcall-landing")
     }
 
+    private func eacademics(_ path: String, _ q: [String: String]) -> Reply {
+        let host = "eacademics.iitd.ac.in"
+        if path == "/sportal/login" {
+            // the real portal signs out at /sportal/login?logout
+            if q["logout"] != nil { signedIn.remove(host) }
+            return signedIn.contains(host) ? .redirect("/sportal/home") : page("eacademics-landing")
+        }
+        return signedIn.contains(host) ? page("eacademics") : .redirect("/sportal/login")
+    }
+
+    /// The shared IITD sign-in page; `clients` says where each app's login lands.
     private func oauth(_ q: [String: String]) -> Reply {
-        func login(_ error: String) -> Reply { page("oauth-login", ["ERROR": error]) }
+        let client = q["client_id"].flatMap { Self.clients[$0] != nil ? $0 : nil } ?? "rollcall"
+        let (app, host, landing) = Self.clients[client]!
+        func login(_ error: String) -> Reply { page("oauth-login", ["ERROR": error, "APP": app, "CLIENT": client]) }
         guard q["username"] != nil else { return login("") }
         guard valid(q["username"], q["password"]) else { return login(#"<p class="error">Invalid username or password.</p>"#) }
         guard q["ct_captcha"]?.trimmingCharacters(in: .whitespaces).uppercased() == Self.rollcallCaptcha else {
             return login(#"<p class="error">The security code entered was incorrect.</p>"#)
         }
-        signedIn.insert("rollcall.iitd.ac.in")
-        return .redirect("\(Demo.scheme)://rollcall.iitd.ac.in/index.php")
+        signedIn.insert(host)
+        return .redirect("\(Demo.scheme)://\(host)\(landing)")
     }
+
+    private static let clients: [String: (app: String, host: String, landing: String)] = [
+        "rollcall": ("RollCall", "rollcall.iitd.ac.in", "/index.php"),
+        "eacademics": ("eAcademics", "eacademics.iitd.ac.in", "/sportal/home"),
+    ]
 
     private func valid(_ user: String?, _ pass: String?) -> Bool {
         user?.trimmingCharacters(in: .whitespaces).lowercased() == Demo.user && pass == Demo.password

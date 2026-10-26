@@ -92,6 +92,13 @@ final class PagesContainer: UIView {
     }
 }
 
+/// A single portal's page outside the cube, for the ⋮ menu's portals.
+struct SingleFace: UIViewRepresentable {
+    let session: PortalSession
+    func makeUIView(context: Context) -> UIView { Face(session: session) }
+    func updateUIView(_ view: UIView, context: Context) {}
+}
+
 /// One cube face: the tab's WebView, with a stand-in until its first page paints.
 private final class Face: UIView {
     init(session: PortalSession) {

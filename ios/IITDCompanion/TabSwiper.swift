@@ -11,7 +11,7 @@ import UIKit.UIGestureRecognizerSubclass
 /// from there, so quick repeated swipes chain round the ring.
 @Observable @MainActor
 final class TabSwiper {
-    @ObservationIgnored private let tabs = Portal.allCases
+    @ObservationIgnored private let tabs = Portal.dock
 
     private(set) var current: Portal
     /// The tab being revealed, if any.

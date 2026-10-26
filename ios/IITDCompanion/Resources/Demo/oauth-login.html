@@ -7,11 +7,11 @@
 <div class="demo-banner">Demo mode · sample data, nothing is sent to IIT Delhi</div>
 <div class="login">
   <div class="logo">IIT Delhi Single Sign-On</div>
-  <p class="muted" style="text-align:center;margin-top:0">Sign in to continue to RollCall</p>
+  <p class="muted" style="text-align:center;margin-top:0">Sign in to continue to {{APP}}</p>
   <div class="card">
     {{ERROR}}
     <form method="get" action="/authorize.php">
-      <input type="hidden" name="client_id" value="rollcall">
+      <input type="hidden" name="client_id" value="{{CLIENT}}">
       <label for="username">Kerberos ID</label>
       <input type="text" name="username" id="username" autocapitalize="off" autocomplete="username">
       <label for="password">Password</label>
