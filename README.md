@@ -72,7 +72,7 @@ The code is open, so you can check every line of this yourself. Full details are
 
 | Platform | Status |
 |---|---|
-| Android (8.0 and later) | Google Play: in testing, public release coming soon |
+| Android (8.0 and later) | [Get it on Google Play](https://play.google.com/store/apps/details?id=com.xlonlabs.iitdcompanion) |
 | iPhone (iOS 17 and later) | App Store: in review, public release coming soon |
 
 Want to try it early? [Open an issue](https://github.com/n06-nitin/iitd_companion/issues) or email [nitin@xlonlabs.com](mailto:nitin@xlonlabs.com).
