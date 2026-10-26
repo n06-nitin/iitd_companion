@@ -10,8 +10,11 @@ import org.json.JSONObject
  *   webmail:    form#login-form  #rcmloginuser  #rcmloginpwd  #rcmloginsubmit
  *
  * The injected script reports which state the page is in and fills the form
- * on request. It only presses "Log in" itself when the form has no CAPTCHA;
- * a CAPTCHA is always answered by the human.
+ * on request. Moodle's CAPTCHA is a sum written out in the page text
+ * ("Please add 49 + 83 =", "Please subtract 97 - 46 =",
+ * "Please enter first value 64 , 80 =", "Please enter second value 42 , 27 ="),
+ * so the script answers it and presses "Log in". A question it doesn't
+ * recognise is left to the human.
  */
 class LoginForm(
     val form: String,
@@ -78,20 +81,36 @@ class LoginForm(
     el.dispatchEvent(new Event('change',{bubbles:true}));
     return true;
   }
+  // the question is the bare text right before the input (a <label> in demo mode)
+  function question(cap){
+    var t='';
+    for (var n=cap.previousSibling; n && n.nodeType===3; n=n.previousSibling) t=n.nodeValue+t;
+    if (!/\d/.test(t) && cap.id) t=txt(q('label[for="'+cap.id+'"]'));
+    return t.replace(/\s+/g,' ');
+  }
+  function solve(cap){
+    var m=/please (add|subtract|enter first value|enter second value) (-?\d+) ?[-+,] ?(-?\d+) ?=/i.exec(question(cap));
+    if (!m) return null;
+    var a=parseInt(m[2],10), b=parseInt(m[3],10), op=m[1].toLowerCase();
+    return String(op==='add' ? a+b : op==='subtract' ? a-b : op==='enter first value' ? a : b);
+  }
 
   window.__IC={
     fill:function(user,pass,submit){
       var u=q(S.user), p=q(S.pass), cap=q(S.captcha), rem=q(S.remember);
       var ok=setVal(u,user) && setVal(p,pass);
+      var answer=cap ? solve(cap) : null;
       if (rem) rem.checked=true;
       if (cap) {
-        if (cap.value==='0') setVal(cap,'');
+        if (answer!==null) setVal(cap,answer);
+        else if (cap.value==='0') setVal(cap,'');
         cap.setAttribute('inputmode','numeric');
         cap.setAttribute('enterkeyhint','go');
         cap.setAttribute('autocomplete','off');
       }
-      post({type:'filled', ok:ok, captcha:!!cap});
-      if (ok && submit && !cap) {
+      var human=!!cap && answer===null;
+      post({type:'filled', ok:ok, captcha:human});
+      if (ok && submit && !human) {
         var b=q(S.submit);
         if (b) b.click(); else if (u.form) u.form.submit();
       }

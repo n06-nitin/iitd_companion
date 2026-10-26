@@ -63,8 +63,8 @@ enum class Portal(
     EACADEMICS("eAcademics", "https://eacademics.iitd.ac.in/sportal/login",
         setOf("oauth.iitd.ac.in"), null, Icons.Rounded.HistoryEdu, Color(0xFFE0675A), inDock = false);
 
-    /** No CAPTCHA on the login form, so the app presses "Log in" itself. */
-    val autoLogin get() = login != null && login.captcha == null
+    /** A plain login form (Moodle's arithmetic CAPTCHA included), so the app presses "Log in" itself. */
+    val autoLogin get() = login != null
     val bootstrap get() = login?.bootstrap ?: RollCallScript.BOOTSTRAP
 
     companion object {

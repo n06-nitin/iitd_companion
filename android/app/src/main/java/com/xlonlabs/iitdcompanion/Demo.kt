@@ -76,7 +76,7 @@ object Demo {
     private fun moodle(ctx: Context, host: String, path: String, q: Uri): WebResourceResponse? {
         val old = host == "moodle.iitd.ac.in"
         val captcha = if (old) """
-            <div class="captcha"><label for="valuepkg3">Please solve: <b>$MOODLE_CAPTCHA_Q =</b></label>
+            <div class="captcha"><label for="valuepkg3">Please add <b>$MOODLE_CAPTCHA_Q =</b></label>
             <input type="text" name="valuepkg3" id="valuepkg3" class="form-control" autocomplete="off"></div>
         """.trimIndent() else ""
         fun login(error: String) =
