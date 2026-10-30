@@ -30,17 +30,26 @@ enum RollCallScript {
   }
   function click(el){ if(el){ try{el.click();}catch(e){} return true; } return false; }
 
-  var COURSE_RE=/^[A-Z]{2,4}[0-9]{3}[A-Z]?$/;
+  // the site's course buttons ("MCL261", "MTL2006 (Sec B)", "MEL2002-Lab", "PYL1001LH408");
+  // pages without them (the demo) are matched by a leading course code
+  var COURSE_RE=/^[A-Z]{2,4}[0-9]{3,4}/;
+  function courseEls(){
+    var els=[].slice.call(document.querySelectorAll('.course-btn'));
+    return els.length ? els : [].slice.call(document.querySelectorAll('button.btn, a.btn, .btn, button, a, [role=button]'))
+      .filter(function(e){ return COURSE_RE.test(txt(e)); });
+  }
   function scrapeCourses(){
     var seen={}, out=[];
-    [].slice.call(document.querySelectorAll('button.btn, a.btn, .btn, button, a, [role=button]'))
-      .forEach(function(e){ var t=txt(e); if(COURSE_RE.test(t)&&!seen[t]){ seen[t]=1; out.push(t);} });
+    courseEls().forEach(function(e){ var t=txt(e); if(t&&!seen[t]){ seen[t]=1; out.push(t);} });
     return out;
   }
+  // "Selected Course: MTL2006 (Sec B) (2026-27, Sem I)"
   function selectedCourse(){
+    var el=q('.course-btn.selected-course');
+    if (el) return txt(el);
     var b=(document.body?document.body.innerText:'')||'';
-    var m=b.match(/Selected Course:\s*([A-Z]{2,4}[0-9]{3}[A-Z]?)/);
-    return m?m[1]:null;
+    var m=b.match(/Selected Course:[ \t]*([^\n]+)/);
+    return m ? m[1].replace(/\s*\(\d{4}-\d{2},[^)]*\)\s*$/,'').trim() || null : null;
   }
   function isLogin(){
     return location.hostname.indexOf('oauth')!==-1
@@ -99,6 +108,84 @@ enum RollCallScript {
   maybe();
   try { new MutationObserver(soon).observe(document.documentElement,{subtree:true,childList:true}); } catch(e){}
   setInterval(function(){ if(!document.hidden) maybe(); }, 1500);
+})();
+"""#
+
+    /// Camera zoom for the QR scanner. The page shows its zoom slider (and pinch-to-zoom)
+    /// only if the camera track reports a `zoom` capability, which Chrome does but
+    /// WKWebView doesn't. For a camera without real zoom this reports one and zooms
+    /// digitally: the preview is blown up, and the frames the scanner decodes are cropped
+    /// to the same centre. A camera with real zoom is left alone. Runs at document start.
+    static let zoom = #"""
+(function(){
+  if (window.__RCZ_INSTALLED) return;
+  window.__RCZ_INSTALLED = true;
+  var T = window.MediaStreamTrack && MediaStreamTrack.prototype;
+  var C = window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype;
+  if (!T || !T.getCapabilities || !C) return;
+
+  var MAX = 4, zoom = new WeakMap(); // track -> digital zoom, only for cameras without real zoom
+  var caps0 = T.getCapabilities, settings0 = T.getSettings, apply0 = T.applyConstraints, draw0 = C.drawImage;
+
+  function digital(t){ if (t.kind !== 'video') return false; var c = caps0.call(t); return !(c && c.zoom); }
+  function trackOf(v){ var s = v.srcObject; return s && s.getVideoTracks ? s.getVideoTracks()[0] : null; }
+  function num(v){ return typeof v === 'number' ? v : v && (v.exact != null ? v.exact : v.ideal); }
+
+  // the video shows what the scanner reads: its centre, blown up
+  function paint(){
+    [].forEach.call(document.querySelectorAll('video'), function(v){
+      var t = trackOf(v), z = (t && zoom.get(t)) || 1;
+      v.style.scale = z > 1 ? String(z) : '';
+      v.style.clipPath = z > 1 ? 'inset(' + (50 - 50 / z) + '%)' : '';
+    });
+  }
+  document.addEventListener('loadedmetadata', paint, true);
+
+  T.getCapabilities = function(){
+    var c = caps0.apply(this, arguments);
+    return digital(this) ? Object.assign({}, c, { zoom: { min: 1, max: MAX, step: 0.1 } }) : c;
+  };
+  T.getSettings = function(){
+    var s = settings0.apply(this, arguments);
+    return digital(this) ? Object.assign({}, s, { zoom: zoom.get(this) || 1 }) : s;
+  };
+  T.applyConstraints = function(c){
+    if (!c || !digital(this)) return apply0.apply(this, arguments);
+    var z = num(c.zoom), rest = Object.assign({}, c);
+    delete rest.zoom;
+    if (Array.isArray(c.advanced)) {
+      rest.advanced = c.advanced.map(function(set){
+        if (set && set.zoom != null) { z = num(set.zoom); set = Object.assign({}, set); delete set.zoom; }
+        return set;
+      }).filter(function(set){ return set && Object.keys(set).length; });
+      if (!rest.advanced.length) delete rest.advanced;
+    }
+    if (z == null) return apply0.apply(this, arguments);
+    zoom.set(this, Math.min(Math.max(+z || 1, 1), MAX));
+    paint();
+    // an empty applyConstraints would drop the scanner's resolution constraints
+    return Object.keys(rest).length ? apply0.call(this, rest) : Promise.resolve();
+  };
+
+  // the scanner copies each frame onto a canvas to decode it: crop that copy to the zoomed centre
+  C.drawImage = function(src){
+    var t = src instanceof HTMLVideoElement && trackOf(src), z = t && zoom.get(t);
+    if (!(z > 1)) return draw0.apply(this, arguments);
+    var a = arguments, W = src.videoWidth, H = src.videoHeight, s = [0, 0, W, H], d;
+    if (a.length >= 9) { s = [a[1], a[2], a[3], a[4]]; d = [a[5], a[6], a[7], a[8]]; }
+    else d = a.length >= 5 ? [a[1], a[2], a[3], a[4]] : [a[1], a[2], W, H];
+    var cx = W / 2, cy = H / 2;
+    return draw0.call(this, src, cx + (s[0] - cx) / z, cy + (s[1] - cy) / z, s[2] / z, s[3] / z, d[0], d[1], d[2], d[3]);
+  };
+
+  // more pixels to zoom into: ask for 1080p where the scanner only set a minimum width
+  var md = navigator.mediaDevices, gum0 = md && md.getUserMedia;
+  if (gum0) md.getUserMedia = function(c){
+    var v = c && c.video;
+    if (v && typeof v === 'object' && v.width && typeof v.width === 'object' && v.width.ideal == null && v.width.exact == null)
+      c = Object.assign({}, c, { video: Object.assign({}, v, { width: Object.assign({}, v.width, { ideal: 1920 }) }) });
+    return gum0.call(md, c);
+  };
 })();
 """#
 

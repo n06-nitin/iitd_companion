@@ -636,6 +636,9 @@ private fun CourseChip(code: String, active: Boolean, accent: Color, onClick: ()
             .clickableNoRipple(onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 10.dp)
     ) {
-        Text(code, color = if (active) Ink else Bone, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Text(courseCode(code), color = if (active) Ink else Bone, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
     }
 }
+
+/** Just the code: "MTL2006 (Sec B)", "MEL2002-Lab", "PYL1001LH408" → MTL2006, MEL2002, PYL1001. */
+private fun courseCode(name: String) = Regex("""^[A-Z]{2,4}\d{3,4}""").find(name)?.value ?: name

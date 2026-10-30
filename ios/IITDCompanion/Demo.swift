@@ -94,7 +94,7 @@ final class DemoServer: NSObject, WKURLSchemeHandler {
         let old = host == "moodle.iitd.ac.in"
         let captcha = old
             ? """
-              <div class="captcha"><label for="valuepkg3">Please solve: <b>\(Self.moodleCaptcha.question) =</b></label>
+              <div class="captcha"><label for="valuepkg3">Please add <b>\(Self.moodleCaptcha.question) =</b></label>
               <input type="text" name="valuepkg3" id="valuepkg3" class="form-control" autocomplete="off"></div>
               """
             : ""

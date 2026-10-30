@@ -77,8 +77,8 @@ enum Portal: String, CaseIterable, Identifiable {
         }
     }
 
-    /// No CAPTCHA on the login form, so the app presses "Log in" itself.
-    var autoLogin: Bool { login.map { $0.captcha == nil } ?? false }
+    /// A plain login form (Moodle's arithmetic CAPTCHA included), so the app presses "Log in" itself.
+    var autoLogin: Bool { login != nil }
     var bootstrap: String { login?.bootstrap ?? RollCallScript.bootstrap }
 }
 
@@ -183,6 +183,11 @@ final class PortalSession {
         config.preferences.javaScriptCanOpenWindowsAutomatically = true
         config.userContentController.add(delegate, name: "ic")
         config.userContentController.add(delegate, name: "icTouch")
+        if portal == .rollcall {
+            // before the scanner asks its camera what it can do
+            config.userContentController.addUserScript(
+                WKUserScript(source: RollCallScript.zoom, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         config.setURLSchemeHandler(DemoServer.shared, forURLScheme: Demo.scheme)
 
         let w = WKWebView(frame: .zero, configuration: config)

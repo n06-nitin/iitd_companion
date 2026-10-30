@@ -36,6 +36,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import org.json.JSONObject
 
 enum class Portal(
@@ -156,6 +158,9 @@ class PortalSession(val portal: Portal, private val creds: Creds) {
         settings.javaScriptCanOpenWindowsAutomatically = true
         settings.builtInZoomControls = true
         settings.displayZoomControls = false
+        // before the scanner asks its camera what it can do; older WebViews get it with the bootstrap instead
+        if (portal == Portal.ROLLCALL && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT))
+            WebViewCompat.addDocumentStartJavaScript(this, RollCallScript.ZOOM, setOf("https://rollcall.iitd.ac.in"))
         addJavascriptInterface(WebBridge(::onMessage) { busy, pans -> touchBusy = busy; pagePans = pans }, "AndroidIC")
         webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView, newProgress: Int) { this@PortalSession.progress = newProgress }
@@ -197,6 +202,7 @@ class PortalSession(val portal: Portal, private val creds: Creds) {
             override fun onPageCommitVisible(view: WebView, url: String?) {
                 painted = true
                 view.evaluateJavascript(portal.bootstrap + TOUCH_PROBE, null)
+                if (portal == Portal.ROLLCALL) view.evaluateJavascript(RollCallScript.ZOOM, null)
             }
 
             override fun onPageFinished(view: WebView, url: String?) {

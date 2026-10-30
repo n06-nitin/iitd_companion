@@ -408,6 +408,11 @@ private struct CourseRow: View {
     }
 }
 
+/// Just the code: "MTL2006 (Sec B)", "MEL2002-Lab", "PYL1001LH408" → MTL2006, MEL2002, PYL1001.
+private func courseCode(_ name: String) -> String {
+    name.prefixMatch(of: /[A-Z]{2,4}\d{3,4}/).map { String($0.output) } ?? name
+}
+
 private struct CourseChip: View {
     let code: String
     let active: Bool
@@ -415,7 +420,7 @@ private struct CourseChip: View {
     let onClick: () -> Void
 
     var body: some View {
-        Text(code)
+        Text(courseCode(code))
             .m3(14, weight: .semibold)
             .foregroundStyle((active ? Ink : Bone).color)
             .padding(.horizontal, 18)
