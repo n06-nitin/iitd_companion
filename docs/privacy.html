@@ -21,6 +21,8 @@
     --moodlenew: #1f8f7d;
     --rollcall: #3f8f32;
     --eacademics: #c0473b;
+    --exam: #6c4fc4;
+    --classgrid: #c2457f;
     --webmail: #2f6fc4;
     --link: #2f6fc4;
   }
@@ -37,6 +39,8 @@
       --moodlenew: #4fc1ae;
       --rollcall: #7ccb6e;
       --eacademics: #e0675a;
+      --exam: #a98bf0;
+      --classgrid: #e07bb5;
       --webmail: #6fa6f2;
       --link: #8db8f5;
     }
@@ -53,6 +57,8 @@
     --moodlenew: #4fc1ae;
     --rollcall: #7ccb6e;
     --eacademics: #e0675a;
+    --exam: #a98bf0;
+    --classgrid: #e07bb5;
     --webmail: #6fa6f2;
     --link: #8db8f5;
   }
@@ -116,9 +122,11 @@
       <span style="background: var(--moodle)"></span>
       <span style="background: var(--rollcall)"></span>
       <span style="background: var(--eacademics)"></span>
+      <span style="background: var(--exam)"></span>
+      <span style="background: var(--classgrid)"></span>
     </div>
     <h1>IITD Companion Privacy Policy</h1>
-    <p class="meta">Effective 27 October 2026 · Android and iPhone app <code>com.xlonlabs.iitdcompanion</code> · Developer: Nitin Singh (XLON Labs)</p>
+    <p class="meta">Effective 30 October 2026 · Android and iPhone app <code>com.xlonlabs.iitdcompanion</code> · Developer: Nitin Singh (XLON Labs)</p>
   </header>
 
   <div class="glance">
@@ -126,33 +134,40 @@
     <ul>
       <li>The app does not collect, sell or share any personal data.</li>
       <li>Your Kerberos ID and password stay on your phone, encrypted, and are only typed into IIT Delhi's own login pages.</li>
+      <li>The app opens IIT Delhi's websites and ClassGrid, run by IIT Delhi's student developer club DevClub. Nothing else.</li>
       <li>No analytics, no ads, no tracking, and no server run by the developer.</li>
     </ul>
   </div>
 
   <section>
     <h2>What the app is</h2>
-    <p>IITD Companion opens five IIT Delhi websites inside one app and signs you in to them with your saved Kerberos ID and password. It is an unofficial app and is not affiliated with or endorsed by IIT Delhi. The websites it opens are run by IIT Delhi:</p>
+    <p>IITD Companion opens seven websites inside one app and signs you in to them with your saved Kerberos ID and password. It is an unofficial app and is not affiliated with or endorsed by IIT Delhi. Six of the websites are run by IIT Delhi:</p>
     <ul class="sites">
       <li><span class="dot" style="background: var(--webmail)"></span><span>Webmail: <code>webmail.iitd.ac.in</code></span></li>
       <li><span class="dot" style="background: var(--moodlenew)"></span><span>Moodle New: <code>moodlenew.iitd.ac.in</code></span></li>
       <li><span class="dot" style="background: var(--moodle)"></span><span>Moodle: <code>moodle.iitd.ac.in</code></span></li>
       <li><span class="dot" style="background: var(--rollcall)"></span><span>RollCall: <code>rollcall.iitd.ac.in</code>, signing in through <code>oauth.iitd.ac.in</code></span></li>
       <li><span class="dot" style="background: var(--eacademics)"></span><span>eAcademics: <code>eacademics.iitd.ac.in</code>, opened from the ⋮ menu and signing in through <code>oauth.iitd.ac.in</code></span></li>
+      <li><span class="dot" style="background: var(--exam)"></span><span>Exam IITD (exam seat plan): <code>exam.iitd.ac.in</code>, opened from the ⋮ menu and signing in through <code>oauth.iitd.ac.in</code></span></li>
+    </ul>
+    <p>The seventh is run by DevClub, IIT Delhi's student developer club:</p>
+    <ul class="sites">
+      <li><span class="dot" style="background: var(--classgrid)"></span><span>ClassGrid (timetable): <code>classgrid.devclub.in</code>, opened from the ⋮ menu and signing in through DevClub's sign-in page <code>auth.devclub.in</code>, which hands over to IIT Delhi's <code>oauth.iitd.ac.in</code></span></li>
     </ul>
   </section>
 
   <section>
     <h2>Your Kerberos ID and password</h2>
     <p>When you save your login, it is stored only on your phone, encrypted. On Android, the app encrypts it with an AES-256 key held in your phone's Android Keystore. On iPhone, it is kept in the iOS Keychain, readable only on that phone once it has been unlocked. It is never sent to the developer or to anyone else.</p>
-    <p>The app uses it for one thing: filling in the login form on the IIT Delhi sites listed above. It only does this on those exact addresses, over HTTPS. On Moodle, whose CAPTCHA is a written sum, the Android app also types in the answer, working it out on your phone. The image CAPTCHAs on RollCall and eAcademics are never read by the app; you type those yourself.</p>
+    <p>The app uses it for one thing: filling in the login form on IIT Delhi's own sign-in pages for the sites listed above. It only does this on those exact IIT Delhi addresses, over HTTPS, and never on a DevClub page. On Moodle, whose CAPTCHA is a written sum, the app also types in the answer, working it out on your phone. The image CAPTCHA on IIT Delhi's sign-in page (used by RollCall, eAcademics, Exam IITD and ClassGrid) is never read by the app; you type it yourself.</p>
+    <p>On ClassGrid, the app presses ClassGrid's and DevClub's sign-in buttons for you, then fills in IIT Delhi's sign-in page. As when you sign in to ClassGrid in a browser, IIT Delhi then shares your name, email, Kerberos ID and hostel with DevClub, which handles them under its own policies.</p>
     <p>Your saved login is excluded from Android backups, and on iPhone it is kept for that phone only, so it is never synced to iCloud Keychain or restored onto another device. To remove it, open the <strong>⋮</strong> menu in the app and choose <strong>Forget login &amp; sign out</strong>, or uninstall the app. On iPhone, reinstalling the app also starts you signed out.</p>
   </section>
 
   <section>
     <h2>Other data kept on your phone</h2>
     <ul>
-      <li><strong>Website cookies and storage</strong> for the IIT Delhi sites, so you stay signed in, the same as a web browser keeps them. On iPhone, the app also keeps the IIT Delhi sign-in cookies in a protected file inside the app, so you stay signed in after the app is closed. <strong>Forget login &amp; sign out</strong> deletes all of them.</li>
+      <li><strong>Website cookies and storage</strong> for the sites above, so you stay signed in, the same as a web browser keeps them. On iPhone, the app also keeps the IIT Delhi and DevClub sign-in cookies in a protected file inside the app, so you stay signed in after the app is closed. <strong>Forget login &amp; sign out</strong> deletes all of them.</li>
       <li><strong>The tab you last had open</strong>, so the app reopens there.</li>
       <li><strong>Files you download</strong> from the portals, such as Moodle or Webmail. On Android, they are saved to your phone's Downloads folder through Android's download manager. On iPhone, they are saved in the app's folder in the Files app.</li>
     </ul>
@@ -160,7 +175,7 @@
 
   <section>
     <h2>What goes over the internet</h2>
-    <p>The app only connects your phone directly to IIT Delhi's websites, as a browser would. Whatever you do on those sites, such as reading course pages, marking attendance or sending email, is handled by IIT Delhi under its own policies. Links to any other website open in your regular browser instead of the app.</p>
+    <p>The app only connects your phone directly to the websites listed above, as a browser would: IIT Delhi's, plus ClassGrid and DevClub's sign-in page. Whatever you do on those sites, such as reading course pages, marking attendance or sending email, is handled by IIT Delhi, or for ClassGrid by DevClub, under their own policies. Links to any other website open in your regular browser instead of the app.</p>
   </section>
 
   <section>

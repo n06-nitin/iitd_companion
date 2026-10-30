@@ -4,7 +4,7 @@
 
 # IITD Companion
 
-**The IIT Delhi app for Webmail, Moodle, RollCall and eAcademics: one sign-in, every portal.**
+**The IIT Delhi app for Webmail, Moodle, RollCall, eAcademics, exam seat plans and ClassGrid: one sign-in, every portal.**
 
 A free, open-source Android and iPhone app for IIT Delhi students. It signs you in to IIT Delhi's portals with your Kerberos ID and keeps them all one swipe apart.
 
@@ -22,7 +22,7 @@ A free, open-source Android and iPhone app for IIT Delhi students. It signs you 
 
 ## What is IITD Companion?
 
-IITD Companion is an unofficial mobile app that puts IIT Delhi's most-used websites into one place: **Webmail**, **Moodle New**, **Moodle**, **RollCall** and **eAcademics**. You save your Kerberos ID and password once, and the app fills in each portal's login page for you. Each portal opens in its own tab, and you swipe between them.
+IITD Companion is an unofficial mobile app that puts IIT Delhi's most-used websites into one place: **Webmail**, **Moodle New**, **Moodle**, **RollCall**, **eAcademics**, **Exam IITD** (exam seat plan) and DevClub's **ClassGrid** timetable. You save your Kerberos ID and password once, and the app fills in each portal's login page for you. Each portal opens in its own tab, and you swipe between them.
 
 It is made by an IIT Delhi student, for IIT Delhi students: [Nitin Singh](#about-the-developer), a third-year student living in Aravali Hostel, under his studio [XLON Labs](https://xlonlabs.com). It is not affiliated with or endorsed by IIT Delhi.
 
@@ -40,10 +40,11 @@ It is made by an IIT Delhi student, for IIT Delhi students: [Nitin Singh](#about
 
 - **One login for every portal.** Save your Kerberos ID and password once. The app signs you in to each IIT Delhi portal.
 - **Hands-free sign-in to Webmail and Moodle New.** These have no CAPTCHA, so you are signed in without touching anything.
-- **Moodle's sum, answered for you on Android.** Moodle's CAPTCHA is a written sum like "Please add 49 + 83". From version 1.1.2 the Android app answers it and signs you in. On iPhone you type the answer.
-- **Type only the CAPTCHA on RollCall and eAcademics.** The app fills in your ID and password; you type the image CAPTCHA yourself. The app does not read image CAPTCHAs.
+- **Moodle's sum, answered for you.** Moodle's CAPTCHA is a written sum like "Please add 49 + 83". The app answers it and signs you in (Android 1.1.2 and iPhone 1.1.3 onwards).
+- **Type only the CAPTCHA on IIT Delhi's sign-in page.** RollCall, eAcademics, Exam IITD and ClassGrid all sign in there. The app fills in your ID and password; you type the image CAPTCHA yourself. The app does not read image CAPTCHAs.
 - **RollCall attendance with the QR scanner.** The camera works inside the RollCall tab for marking attendance.
-- **eAcademics** opens from the ⋮ menu, signed in through the same IIT Delhi OAuth page as RollCall.
+- **eAcademics** and **Exam IITD** open from the ⋮ menu, signed in through the same IIT Delhi OAuth page as RollCall.
+- **ClassGrid**, DevClub's timetable, opens from the ⋮ menu on its Plan page. The app presses through DevClub's sign-in to IIT Delhi's, so you only type the CAPTCHA.
 - **Swipe between tabs.** Every portal stays loaded, so switching is instant. Tapping the open tab again takes that portal back home.
 - **Downloads that land where you expect.** Moodle and Webmail files go to Downloads on Android and to the Files app on iPhone.
 - **Native on both platforms.** Kotlin and Jetpack Compose on Android, Swift and SwiftUI on iOS. Not a cross-platform wrapper.
@@ -54,15 +55,17 @@ It is made by an IIT Delhi student, for IIT Delhi students: [Nitin Singh](#about
 |---|---|---|
 | Webmail | `webmail.iitd.ac.in` | Automatic |
 | Moodle New | `moodlenew.iitd.ac.in` | Automatic |
-| Moodle | `moodle.iitd.ac.in` | Automatic on Android (1.1.2 and later); you answer the sum on iPhone |
+| Moodle | `moodle.iitd.ac.in` | Automatic (Android 1.1.2+, iPhone 1.1.3+) |
 | RollCall | `rollcall.iitd.ac.in` via `oauth.iitd.ac.in` | You type the CAPTCHA |
-| eAcademics | via `oauth.iitd.ac.in` | You type the CAPTCHA |
+| eAcademics | `eacademics.iitd.ac.in` via `oauth.iitd.ac.in` | You type the CAPTCHA |
+| Exam IITD | `exam.iitd.ac.in` via `oauth.iitd.ac.in` | You type the CAPTCHA |
+| ClassGrid (DevClub) | `classgrid.devclub.in` via `auth.devclub.in` and `oauth.iitd.ac.in` | You type the CAPTCHA |
 
 ## Privacy and security
 
 - **Your password never leaves your phone** except to be typed into IIT Delhi's own login pages, over HTTPS, on those exact addresses.
 - **Encrypted at rest.** On Android, with an AES-256 key in the Android Keystore. On iPhone, in the iOS Keychain, for that device only (never synced to iCloud).
-- **No analytics, no ads, no tracking, no developer server.** The app talks only to IIT Delhi.
+- **No analytics, no ads, no tracking, no developer server.** The app talks only to IIT Delhi, plus DevClub for ClassGrid.
 - **Excluded from backups.** Your saved login is not copied to Android backups or restored onto another iPhone.
 - **One tap to remove it.** ⋮ menu → *Forget login & sign out* deletes your login and every portal cookie.
 
@@ -89,7 +92,7 @@ Nitin Singh, a third-year IIT Delhi student in Aravali Hostel and founder of XLO
 Your password is encrypted on your phone and is only ever typed into IIT Delhi's own login pages. It is never sent to the developer or anyone else, and the full source code is in this repository.
 
 ### Why do I still have to type a CAPTCHA?
-RollCall and eAcademics show a CAPTCHA image on their login page. The app fills in your ID and password but leaves the CAPTCHA to you. Moodle's CAPTCHA is a written sum, which the Android app answers by itself from version 1.1.2; on iPhone you type the answer. Webmail and Moodle New have no CAPTCHA, so they sign you in by themselves.
+RollCall, eAcademics, Exam IITD and ClassGrid sign in through IIT Delhi's sign-in page, which shows a CAPTCHA image. The app fills in your ID and password but leaves the CAPTCHA to you. Moodle's CAPTCHA is a written sum, which the app answers by itself (Android 1.1.2 and iPhone 1.1.3 onwards). Webmail and Moodle New have no CAPTCHA, so they sign you in by themselves.
 
 ### Can I mark RollCall attendance with this app?
 Yes. Open the RollCall tab and allow camera access when asked. The QR scanner on RollCall's attendance page then works as it does in a browser.
