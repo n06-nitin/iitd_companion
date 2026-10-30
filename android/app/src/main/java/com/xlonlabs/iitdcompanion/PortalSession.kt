@@ -26,6 +26,8 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoStories
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.EventSeat
 import androidx.compose.material.icons.rounded.HistoryEdu
 import androidx.compose.material.icons.rounded.Mail
 import androidx.compose.material.icons.rounded.QrCodeScanner
@@ -45,13 +47,18 @@ enum class Portal(
     val home: String,
     /** Hosts where the saved password may be typed in. */
     val loginHosts: Set<String>,
-    /** null for RollCall, which drives its own OAuth flow via [RollCallScript]. */
+    /** null for RollCall, eAcademics, Exam and ClassGrid, which drive their own OAuth flow via [RollCallScript]. */
     val login: LoginForm?,
     val icon: ImageVector,
     /** Each portal's own hue: the dock pill, status dot and loading bar take it on. */
     val accent: Color,
     /** A tab in the dock; the rest open on demand from the ⋮ menu. */
     val inDock: Boolean = true,
+    /**
+     * After signing in, go back to [home] if the portal landed elsewhere. ClassGrid's home is its Plan
+     * page, which loads the account's saved plan into the browser; the Calendar shows only that.
+     */
+    val returnsHome: Boolean = false,
 ) {
     WEBMAIL("Webmail", "https://webmail.iitd.ac.in/",
         setOf("webmail.iitd.ac.in"), LoginForm.WEBMAIL, Icons.Rounded.Mail, Color(0xFF6FA6F2)),
@@ -63,7 +70,13 @@ enum class Portal(
         setOf("oauth.iitd.ac.in", "rollcall.iitd.ac.in"), null, Icons.Rounded.QrCodeScanner, Color(0xFF7CCB6E)),
     // signs in through the same IITD OAuth page as RollCall, so it reuses that script; only reachable on the intranet / VPN
     EACADEMICS("eAcademics", "https://eacademics.iitd.ac.in/sportal/login",
-        setOf("oauth.iitd.ac.in"), null, Icons.Rounded.HistoryEdu, Color(0xFFE0675A), inDock = false);
+        setOf("oauth.iitd.ac.in"), null, Icons.Rounded.HistoryEdu, Color(0xFFE0675A), inDock = false),
+    // the exam seat plan; signs in through the IITD OAuth page too
+    EXAM("Exam IITD", "https://exam.iitd.ac.in/",
+        setOf("oauth.iitd.ac.in"), null, Icons.Rounded.EventSeat, Color(0xFFA98BF0), inDock = false),
+    // DevClub's timetable calendar, outside iitd.ac.in (see [isPortal]); signs in via DevClub SSO, then the IITD OAuth page
+    CLASSGRID("ClassGrid", "https://classgrid.devclub.in/plan",
+        setOf("oauth.iitd.ac.in"), null, Icons.Rounded.CalendarMonth, Color(0xFFE07BB5), inDock = false, returnsHome = true);
 
     /** A plain login form (Moodle's arithmetic CAPTCHA included), so the app presses "Log in" itself. */
     val autoLogin get() = login != null
@@ -122,6 +135,8 @@ class PortalSession(val portal: Portal, private val creds: Creds) {
     private var redirected = false
     // set when the app pressed "Log in"; landing on the login form again means it failed
     private var autoSubmitted = false
+    // the saved login was filled in; for [Portal.returnsHome], the next page back on the portal reloads home
+    private var signingIn = false
 
     fun run(js: String) = webView?.evaluateJavascript(js, null)
 
@@ -185,7 +200,7 @@ class PortalSession(val portal: Portal, private val creds: Creds) {
                 if (demo) Demo.serve(appCtx, request.url) else null
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                if (!request.isForMainFrame || isIitd(request.url)) return false
+                if (!request.isForMainFrame || isPortal(request.url)) return false
                 openExternally(view.context, request.url)
                 return true
             }
@@ -253,6 +268,7 @@ class PortalSession(val portal: Portal, private val creds: Creds) {
             }
             "login" -> if (!filled && onLoginHost()) {
                 filled = true
+                signingIn = true
                 if (autoSubmitted) loginFailed = true
                 val submit = portal.autoLogin && !autoSubmitted
                 if (submit) autoSubmitted = true
@@ -265,6 +281,12 @@ class PortalSession(val portal: Portal, private val creds: Creds) {
                 autoSubmitted = false
                 loginFailed = false
                 captchaPending = false
+                val url = webView?.url
+                val home = Uri.parse(portal.home)
+                if (signingIn && url != null && Uri.parse(url).host == home.host) {
+                    signingIn = false
+                    if (portal.returnsHome && Uri.parse(url).path != home.path) webView?.loadUrl(portal.home)
+                }
             }
         }
     }
@@ -301,10 +323,14 @@ private const val TOUCH_PROBE = """
 })();
 """
 
-private fun isIitd(uri: Uri): Boolean {
-    val host = uri.host ?: return false
+/** Portals outside iitd.ac.in that still open inside their tab, with ClassGrid's sign-in. */
+private val OUTSIDE_HOSTS = setOf("classgrid.devclub.in", "auth.devclub.in")
+
+/** Stays inside the tab: the IITD portals, plus [OUTSIDE_HOSTS]. */
+private fun isPortal(uri: Uri): Boolean {
+    val host = uri.host?.lowercase() ?: return false
     return (uri.scheme == "https" || uri.scheme == "http") &&
-        (host == "iitd.ac.in" || host.endsWith(".iitd.ac.in"))
+        (host == "iitd.ac.in" || host.endsWith(".iitd.ac.in") || (uri.scheme == "https" && host in OUTSIDE_HOSTS))
 }
 
 private fun openExternally(ctx: Context, uri: Uri) {

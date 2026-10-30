@@ -127,7 +127,7 @@ struct CompanionScreen: View {
     case "loading": return ("Loading \(s.portal.label)…", Caution)
     case "landing", "loggedout": return ("Opening login…", Caution)
     case "login" where s.captchaPending:
-        // no LoginForm means the IITD OAuth page (RollCall, eAcademics)
+        // no LoginForm means the IITD OAuth page (RollCall, eAcademics, Exam)
         return (s.portal.login == nil ? "Type the CAPTCHA, then Login" : "Answer the CAPTCHA, then Go", s.portal.accent)
     case "login": return ("Signing in…", Caution)
     case "home" where s.portal == .rollcall: return ("Pick a course below", s.portal.accent)

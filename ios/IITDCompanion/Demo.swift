@@ -62,6 +62,8 @@ final class DemoServer: NSObject, WKURLSchemeHandler {
             case "moodle.iitd.ac.in", "moodlenew.iitd.ac.in": reply = moodle(host, path, query)
             case "rollcall.iitd.ac.in": reply = rollcall(path)
             case "eacademics.iitd.ac.in": reply = eacademics(path, query)
+            case "exam.iitd.ac.in": reply = exam(path, query)
+            case "classgrid.devclub.in": reply = page("classgrid")
             case "oauth.iitd.ac.in": reply = oauth(query)
             default: reply = .notFound
             }
@@ -140,6 +142,13 @@ final class DemoServer: NSObject, WKURLSchemeHandler {
         return signedIn.contains(host) ? page("eacademics") : .redirect("/sportal/login")
     }
 
+    private func exam(_ path: String, _ q: [String: String]) -> Reply {
+        let host = "exam.iitd.ac.in"
+        if path == "/seatplan.php" { return signedIn.contains(host) ? page("exam") : .redirect("/") }
+        if q["logout"] != nil { signedIn.remove(host) }
+        return signedIn.contains(host) ? .redirect("/seatplan.php") : page("exam-landing")
+    }
+
     /// The shared IITD sign-in page; `clients` says where each app's login lands.
     private func oauth(_ q: [String: String]) -> Reply {
         let client = q["client_id"].flatMap { Self.clients[$0] != nil ? $0 : nil } ?? "rollcall"
@@ -157,6 +166,7 @@ final class DemoServer: NSObject, WKURLSchemeHandler {
     private static let clients: [String: (app: String, host: String, landing: String)] = [
         "rollcall": ("RollCall", "rollcall.iitd.ac.in", "/index.php"),
         "eacademics": ("eAcademics", "eacademics.iitd.ac.in", "/sportal/home"),
+        "exam": ("Exam IITD", "exam.iitd.ac.in", "/seatplan.php"),
     ]
 
     private func valid(_ user: String?, _ pass: String?) -> Bool {

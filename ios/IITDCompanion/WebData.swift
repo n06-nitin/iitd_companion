@@ -5,7 +5,7 @@ import WebKit
 ///
 /// WKWebView drops session cookies (Moodle's MoodleSession, Roundcube's session…)
 /// whenever the app process ends, which would sign every portal out on each
-/// launch. So the iitd.ac.in session cookies are kept in a protected file when
+/// launch. So the iitd.ac.in (and ClassGrid's devclub.in) session cookies are kept in a protected file when
 /// the app goes to the background and put back before any tab loads.
 @MainActor
 enum WebData {
@@ -21,7 +21,7 @@ enum WebData {
     static func persist() {
         let task = UIApplication.shared.beginBackgroundTask(expirationHandler: nil)
         Task {
-            let cookies = await store.allCookies().filter { $0.isSessionOnly && isIitd($0.domain) }
+            let cookies = await store.allCookies().filter { $0.isSessionOnly && isPortal($0.domain) }
             let rows: [[String: Any]] = cookies.compactMap { c in
                 guard let props = c.properties else { return nil }
                 var row: [String: Any] = [:]
@@ -60,8 +60,8 @@ enum WebData {
         HTTPCookieStorage.shared.removeCookies(since: .distantPast)
     }
 
-    private static func isIitd(_ domain: String) -> Bool {
+    private static func isPortal(_ domain: String) -> Bool {
         let d = domain.hasPrefix(".") ? String(domain.dropFirst()) : domain
-        return d == "iitd.ac.in" || d.hasSuffix(".iitd.ac.in")
+        return d == "iitd.ac.in" || d.hasSuffix(".iitd.ac.in") || d == "devclub.in" || d.hasSuffix(".devclub.in")
     }
 }

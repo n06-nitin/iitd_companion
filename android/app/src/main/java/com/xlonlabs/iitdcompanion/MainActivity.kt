@@ -411,7 +411,7 @@ private fun statusOf(s: PortalSession): Pair<String, Color> = when {
     s.page == "loading" -> "Loading ${s.portal.label}…" to Caution
     s.page == "landing" || s.page == "loggedout" -> "Opening login…" to Caution
     s.page == "login" && s.captchaPending ->
-        // no LoginForm means the IITD OAuth page (RollCall, eAcademics)
+        // no LoginForm means the IITD OAuth page (RollCall, eAcademics, Exam)
         (if (s.portal.login == null) "Type the CAPTCHA, then Login" else "Answer the CAPTCHA, then Go") to s.portal.accent
     s.page == "login" -> "Signing in…" to Caution
     s.page == "home" && s.portal == Portal.ROLLCALL -> "Pick a course below" to s.portal.accent

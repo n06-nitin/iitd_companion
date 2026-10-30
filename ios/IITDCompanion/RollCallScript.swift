@@ -8,6 +8,8 @@ import Foundation
 /// Selectors come from the site's real markup:
 ///   landing: <button ... onclick="location.href='.../authorize.php?...'">Login via IITD OAuth</button>
 ///   eAcademics landing: <a href="https://oauth.iitd.ac.in/authorize.php?...">Click here to login</a>
+///   ClassGrid:  <button class="... nav__login-btn">Login with IITD</button>, then DevClub SSO's
+///               <a href="https://oauth.iitd.ac.in/authorize.php?...">Sign in with IIT Delhi</a>
 ///   login:   <input name="username">, <input name="password">, <input name="ct_captcha" id="captcha_code">
 enum RollCallScript {
 
@@ -56,7 +58,7 @@ enum RollCallScript {
       || !!pick("#captcha_code","input[name='captcha']","img.captcha-image","input.captcha-field","input[type='password']");
   }
   function loginBtnEl(){
-    return pick("button[onclick*='authorize.php']","button[onclick*='oauth.iitd.ac.in']","a[href*='oauth.iitd.ac.in/authorize.php']")
+    return pick("button[onclick*='authorize.php']","button[onclick*='oauth.iitd.ac.in']","a[href*='oauth.iitd.ac.in/authorize.php']","button.nav__login-btn")
       || byText('Login via IITD OAuth');
   }
   function detect(){

@@ -7,6 +7,10 @@ enum Portal: String, CaseIterable, Identifiable {
     case webmail = "WEBMAIL", moodleNew = "MOODLE_NEW", moodle = "MOODLE", rollcall = "ROLLCALL"
     // signs in through the same IITD OAuth page as RollCall, so it reuses that script; only reachable on the intranet / VPN
     case eacademics = "EACADEMICS"
+    // the exam seat plan; signs in through the IITD OAuth page too
+    case exam = "EXAM"
+    // DevClub's timetable calendar, outside iitd.ac.in (see `isPortal`); signs in via DevClub SSO, then the IITD OAuth page
+    case classgrid = "CLASSGRID"
 
     /// The dock's tabs; the rest open on demand from the ⋮ menu.
     static let dock: [Portal] = [.webmail, .moodleNew, .moodle, .rollcall]
@@ -21,6 +25,8 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodle: "Moodle"
         case .rollcall: "RollCall"
         case .eacademics: "eAcademics"
+        case .exam: "Exam IITD"
+        case .classgrid: "ClassGrid"
         }
     }
 
@@ -31,6 +37,8 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodle: URL(string: "https://moodle.iitd.ac.in/my/")!
         case .rollcall: URL(string: "https://rollcall.iitd.ac.in/index.php")!
         case .eacademics: URL(string: "https://eacademics.iitd.ac.in/sportal/login")!
+        case .exam: URL(string: "https://exam.iitd.ac.in/")!
+        case .classgrid: URL(string: "https://classgrid.devclub.in/plan")!
         }
     }
 
@@ -41,17 +49,17 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodleNew: ["moodlenew.iitd.ac.in"]
         case .moodle: ["moodle.iitd.ac.in"]
         case .rollcall: ["oauth.iitd.ac.in", "rollcall.iitd.ac.in"]
-        case .eacademics: ["oauth.iitd.ac.in"]
+        case .eacademics, .exam, .classgrid: ["oauth.iitd.ac.in"]
         }
     }
 
-    /// nil for RollCall and eAcademics, which drive their own OAuth flow via `RollCallScript`.
+    /// nil for RollCall, eAcademics, Exam and ClassGrid, which drive their own OAuth flow via `RollCallScript`.
     var login: LoginForm? {
         switch self {
         case .webmail: .webmail
         case .moodleNew: .moodleNew
         case .moodle: .moodle
-        case .rollcall, .eacademics: nil
+        case .rollcall, .eacademics, .exam, .classgrid: nil
         }
     }
 
@@ -63,6 +71,8 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodle: "icon_school"
         case .rollcall: "icon_qr_code_scanner"
         case .eacademics: "icon_history_edu"
+        case .exam: "icon_event_seat"
+        case .classgrid: "icon_calendar_month"
         }
     }
 
@@ -74,8 +84,14 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodle: Tone(0xFFF0913A)
         case .rollcall: Tone(0xFF7CCB6E)
         case .eacademics: Tone(0xFFE0675A)
+        case .exam: Tone(0xFFA98BF0)
+        case .classgrid: Tone(0xFFE07BB5)
         }
     }
+
+    /// After signing in, go back to `home` if the portal landed elsewhere. ClassGrid's home is its Plan
+    /// page, which loads the account's saved plan into the browser; the Calendar shows only that.
+    var returnsHome: Bool { self == .classgrid }
 
     /// A plain login form (Moodle's arithmetic CAPTCHA included), so the app presses "Log in" itself.
     var autoLogin: Bool { login != nil }
@@ -119,6 +135,8 @@ final class PortalSession {
     @ObservationIgnored private var redirected = false
     // set when the app pressed "Log in"; landing on the login form again means it failed
     @ObservationIgnored private var autoSubmitted = false
+    // the saved login was filled in; for `returnsHome`, the next page back on the portal reloads home
+    @ObservationIgnored private var signingIn = false
 
     /// The address that failed to load, while its error page is showing.
     @ObservationIgnored private var failedURL: URL?
@@ -288,6 +306,7 @@ final class PortalSession {
         case "login":
             if !filled && onLoginHost() {
                 filled = true
+                signingIn = true
                 if autoSubmitted { set(\.loginFailed, true) }
                 let submit = portal.autoLogin && !autoSubmitted
                 if submit { autoSubmitted = true }
@@ -298,6 +317,10 @@ final class PortalSession {
             autoSubmitted = false
             set(\.loginFailed, false)
             set(\.captchaPending, false)
+            if signingIn, let url = webView?.url, Demo.real(url).host == portal.home.host {
+                signingIn = false
+                if portal.returnsHome && url.path != portal.home.path { webView?.load(URLRequest(url: homeURL)) }
+            }
         }
     }
 
@@ -343,8 +366,13 @@ func isIitd(_ url: URL) -> Bool {
     return host == "iitd.ac.in" || host.hasSuffix(".iitd.ac.in")
 }
 
+/// Portals outside iitd.ac.in that still open inside their tab, with ClassGrid's sign-in.
+private let outsideHosts: Set<String> = ["classgrid.devclub.in", "auth.devclub.in"]
+
 /// Stays inside the tab: the portals themselves, or demo mode's copies of them.
-func isPortal(_ url: URL) -> Bool { isIitd(url) || url.scheme == Demo.scheme }
+func isPortal(_ url: URL) -> Bool {
+    isIitd(url) || url.scheme == Demo.scheme || (url.scheme == "https" && outsideHosts.contains(url.host?.lowercased() ?? ""))
+}
 
 @MainActor
 func openExternally(_ url: URL) {

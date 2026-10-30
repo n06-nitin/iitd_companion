@@ -11,6 +11,7 @@
 		022CAF0373E1A3456E62F584 /* moodle-login.html in Resources */ = {isa = PBXBuildFile; fileRef = 6AB1F616FE1C920479CEA50A /* moodle-login.html */; };
 		09747543BD3CF7C63B551BE7 /* Ui.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE99FF9D3CDA1514FBCB5B5 /* Ui.swift */; };
 		0E60A3D608E3B1201BFCC564 /* webmail-login.html in Resources */ = {isa = PBXBuildFile; fileRef = A0821CBF3D7CE086A0F89C03 /* webmail-login.html */; };
+		0FA23A1638E94C92256B104D /* classgrid.html in Resources */ = {isa = PBXBuildFile; fileRef = D6D021F0B5D58EA18212414E /* classgrid.html */; };
 		130A14E2E9AD732909BAEC5B /* Lecture-01.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 2774C61A8429ABC703808F57 /* Lecture-01.pdf */; };
 		141E1062F2FB2549F07237A3 /* eacademics-landing.html in Resources */ = {isa = PBXBuildFile; fileRef = 5E8081B209E0AB9BE27E760D /* eacademics-landing.html */; };
 		2B5D09F42B421AF7C818B2AE /* IITDCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5893B9184810B28D89EFFC52 /* IITDCompanionApp.swift */; };
@@ -18,6 +19,7 @@
 		3E2A2B657AB63741D4440C30 /* SecureCreds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E3C3C171E62C2A406C7598E /* SecureCreds.swift */; };
 		4BCEC6F668DC69E6157DE7E2 /* BricolageGrotesque.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 86584DE03699546D8BF34362 /* BricolageGrotesque.ttf */; };
 		51141B7AE9DF0DD03D01B520 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C891C516A33849D93E5DDF10 /* PrivacyInfo.xcprivacy */; };
+		55CD6430EAD3A448EDC892B6 /* exam.html in Resources */ = {isa = PBXBuildFile; fileRef = 1367C20EA5E04D130DEE4ACE /* exam.html */; };
 		68EE9D611070317B6073769C /* eacademics.html in Resources */ = {isa = PBXBuildFile; fileRef = 9DBBC18DDA6C8E47B867C6D1 /* eacademics.html */; };
 		6C65341ED63D062C49F98EA9 /* webmail.html in Resources */ = {isa = PBXBuildFile; fileRef = A9CB2759F73AD48DFA2952F9 /* webmail.html */; };
 		6FB56456300BF5E567889A16 /* moodle-guest.html in Resources */ = {isa = PBXBuildFile; fileRef = FB3E1B3478988F400962C2E6 /* moodle-guest.html */; };
@@ -35,12 +37,14 @@
 		E25FB5C712D27B35A9E9B35F /* rollcall.html in Resources */ = {isa = PBXBuildFile; fileRef = 60F1ED3934C2BD5B8E585A1A /* rollcall.html */; };
 		E55BDF0C716F7DD288D6A371 /* SetupScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BE1C8ED2F2D09294B14500B /* SetupScreen.swift */; };
 		EE0192092958CA09AE343E09 /* rollcall-landing.html in Resources */ = {isa = PBXBuildFile; fileRef = 80F26ACB415CD08284271904 /* rollcall-landing.html */; };
+		EF64B81F0B58B11EA24FB13C /* exam-landing.html in Resources */ = {isa = PBXBuildFile; fileRef = C18BA2EDD251922845713893 /* exam-landing.html */; };
 		F3580687D9BE993D1DDD0965 /* RollCallScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3CC621F0460F6FF8D5B80 /* RollCallScript.swift */; };
 		FA2F0DFEEE31FF70CF6769D2 /* PagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D40B27D52DD53FDDFCEAE9A6 /* PagesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0877F73BB99ED8D4CFC3E7DB /* oauth-login.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "oauth-login.html"; sourceTree = "<group>"; };
+		1367C20EA5E04D130DEE4ACE /* exam.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = exam.html; sourceTree = "<group>"; };
 		1DA3CC621F0460F6FF8D5B80 /* RollCallScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollCallScript.swift; sourceTree = "<group>"; };
 		23862DA34B30534E98AC3621 /* IITDCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = IITDCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2774C61A8429ABC703808F57 /* Lecture-01.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Lecture-01.pdf"; sourceTree = "<group>"; };
@@ -66,9 +70,11 @@
 		A9CB2759F73AD48DFA2952F9 /* webmail.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = webmail.html; sourceTree = "<group>"; };
 		AB7D08DB6A663E3B9F82C22E /* demo.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demo.css; sourceTree = "<group>"; };
 		B2ED2D2C0AB00CB29D1AEB9F /* PortalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalSession.swift; sourceTree = "<group>"; };
+		C18BA2EDD251922845713893 /* exam-landing.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "exam-landing.html"; sourceTree = "<group>"; };
 		C891C516A33849D93E5DDF10 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		CD89B6DBE3D1D6B843A79708 /* OFL-BricolageGrotesque.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-BricolageGrotesque.txt"; sourceTree = "<group>"; };
 		D40B27D52DD53FDDFCEAE9A6 /* PagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagesView.swift; sourceTree = "<group>"; };
+		D6D021F0B5D58EA18212414E /* classgrid.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = classgrid.html; sourceTree = "<group>"; };
 		DAF74AF6107ED3C2ED353EA8 /* TabSwiper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSwiper.swift; sourceTree = "<group>"; };
 		F1EDA4DD580A98957519975D /* WebData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebData.swift; sourceTree = "<group>"; };
 		FB3E1B3478988F400962C2E6 /* moodle-guest.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "moodle-guest.html"; sourceTree = "<group>"; };
@@ -120,9 +126,12 @@
 		6FC8768AE3A44A508D0744B8 /* Demo */ = {
 			isa = PBXGroup;
 			children = (
+				D6D021F0B5D58EA18212414E /* classgrid.html */,
 				AB7D08DB6A663E3B9F82C22E /* demo.css */,
 				5E8081B209E0AB9BE27E760D /* eacademics-landing.html */,
 				9DBBC18DDA6C8E47B867C6D1 /* eacademics.html */,
+				C18BA2EDD251922845713893 /* exam-landing.html */,
+				1367C20EA5E04D130DEE4ACE /* exam.html */,
 				2774C61A8429ABC703808F57 /* Lecture-01.pdf */,
 				FB3E1B3478988F400962C2E6 /* moodle-guest.html */,
 				6AB1F616FE1C920479CEA50A /* moodle-login.html */,
@@ -210,9 +219,12 @@
 				130A14E2E9AD732909BAEC5B /* Lecture-01.pdf in Resources */,
 				2CE6DEEF5842C79A51BA3270 /* OFL-BricolageGrotesque.txt in Resources */,
 				51141B7AE9DF0DD03D01B520 /* PrivacyInfo.xcprivacy in Resources */,
+				0FA23A1638E94C92256B104D /* classgrid.html in Resources */,
 				AB8E5F934ACE7CA9C3A099C9 /* demo.css in Resources */,
 				141E1062F2FB2549F07237A3 /* eacademics-landing.html in Resources */,
 				68EE9D611070317B6073769C /* eacademics.html in Resources */,
+				EF64B81F0B58B11EA24FB13C /* exam-landing.html in Resources */,
+				55CD6430EAD3A448EDC892B6 /* exam.html in Resources */,
 				949AF732D200AF742CFA2101 /* globalsign_gcc_r46_ov_tls_ca_2025.cer in Resources */,
 				6FB56456300BF5E567889A16 /* moodle-guest.html in Resources */,
 				022CAF0373E1A3456E62F584 /* moodle-login.html in Resources */,
@@ -285,7 +297,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -304,7 +316,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.3;
+				MARKETING_VERSION = 1.1.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -370,7 +382,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -383,7 +395,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.3;
+				MARKETING_VERSION = 1.1.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -48,6 +48,8 @@ object Demo {
             host == "moodle.iitd.ac.in" || host == "moodlenew.iitd.ac.in" -> moodle(ctx, host, path, url)
             host == "rollcall.iitd.ac.in" -> rollcall(ctx, path)
             host == "eacademics.iitd.ac.in" -> eacademics(ctx, path, url)
+            host == "exam.iitd.ac.in" -> exam(ctx, path, url)
+            host == "classgrid.devclub.in" -> page(ctx, "classgrid")
             host == "oauth.iitd.ac.in" -> oauth(ctx, url)
             else -> null
         }
@@ -121,6 +123,13 @@ object Demo {
         return if (host in signedIn) page(ctx, "eacademics") else redirect("/sportal/login")
     }
 
+    private fun exam(ctx: Context, path: String, q: Uri): WebResourceResponse? {
+        val host = "exam.iitd.ac.in"
+        if (path == "/seatplan.php") return if (host in signedIn) page(ctx, "exam") else redirect("/")
+        if (q.queryParameterNames.contains("logout")) signedIn -= host
+        return if (host in signedIn) redirect("/seatplan.php") else page(ctx, "exam-landing")
+    }
+
     /** The shared IITD sign-in page; [CLIENTS] says where each app's login lands. */
     private fun oauth(ctx: Context, q: Uri): WebResourceResponse? {
         val client = q.getQueryParameter("client_id")?.takeIf { it in CLIENTS } ?: "rollcall"
@@ -143,6 +152,7 @@ object Demo {
     private val CLIENTS = mapOf(
         "rollcall" to ("RollCall" to "https://rollcall.iitd.ac.in/index.php"),
         "eacademics" to ("eAcademics" to "https://eacademics.iitd.ac.in/sportal/home"),
+        "exam" to ("Exam IITD" to "https://exam.iitd.ac.in/seatplan.php"),
     )
 
     private fun valid(user: String?, pass: String?) = user?.trim()?.lowercase() == USER && pass == PASSWORD
