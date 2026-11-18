@@ -160,7 +160,7 @@ fun SetupScreen(initial: Creds?, onSaved: (Creds) -> Unit, onCancel: (() -> Unit
 @Composable
 private fun PortalDots() {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Portal.dock.forEach { p ->
+        Portal.defaultDock.forEach { p ->
             Box(Modifier.size(8.dp).clip(CircleShape).clay(p.accent, radius = 4.dp, depth = 0.dp))
         }
     }

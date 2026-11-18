@@ -19,8 +19,8 @@ android {
         applicationId = "com.xlonlabs.iitdcompanion"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.1.4"
+        versionCode = 9
+        versionName = "1.1.5"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -71,3 +71,6 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
 }
+
+// Personal extras for local debug builds (see DebugAddon); the script is kept outside git
+rootProject.file("debug-addon.gradle").takeIf { it.exists() }?.let { apply(from = it) }

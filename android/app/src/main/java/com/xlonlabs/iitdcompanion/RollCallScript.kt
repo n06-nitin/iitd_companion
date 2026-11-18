@@ -24,7 +24,7 @@ object RollCallScript {
 
   function post(o){ try { AndroidIC.postMessage(JSON.stringify(o)); } catch(e){} }
   function txt(el){ return ((el.innerText||el.textContent||el.value||'')+'').trim(); }
-  function q(sel){ try { return document.querySelector(sel); } catch(e){ return null; } }
+  function q(sel){ if(!sel) return null; try { return document.querySelector(sel); } catch(e){ return null; } }
   function clickables(){ return [].slice.call(document.querySelectorAll('a,button,input[type=submit],input[type=button],[role=button],[onclick]')); }
   function pick(){ for (var i=0;i<arguments.length;i++){ var el=q(arguments[i]); if(el) return el; } return null; }
   function byText(t){
@@ -61,8 +61,11 @@ object RollCallScript {
     return location.hostname.indexOf('oauth')!==-1
       || !!pick("#captcha_code","input[name='captcha']","img.captcha-image","input.captcha-field","input[type='password']");
   }
+  var cgBoot = Date.now();
   function loginBtnEl(){
-    return pick("button[onclick*='authorize.php']","button[onclick*='oauth.iitd.ac.in']","a[href*='oauth.iitd.ac.in/authorize.php']","button.nav__login-btn")
+    // ClassGrid renders nav__login-btn before its async session check completes; wait so a signed-in user isn't kicked to OAuth
+    var cg = (location.hostname === 'classgrid.devclub.in' && Date.now() - cgBoot < 2500) ? null : "button.nav__login-btn";
+    return pick("button[onclick*='authorize.php']","button[onclick*='oauth.iitd.ac.in']","a[href*='oauth.iitd.ac.in/authorize.php']", cg)
       || byText('Login via IITD OAuth');
   }
   function detect(){
@@ -109,6 +112,7 @@ object RollCallScript {
   }
   document.addEventListener('DOMContentLoaded', maybe);
   maybe();
+  if (location.hostname === 'classgrid.devclub.in') setTimeout(maybe, 2600);
   try { new MutationObserver(maybe).observe(document.documentElement,{subtree:true,childList:true}); } catch(e){}
   setInterval(maybe, 1500);
 })();

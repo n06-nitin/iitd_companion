@@ -37,6 +37,9 @@ final class PagesContainer: UIView {
     required init?(coder: NSCoder) { fatalError() }
 
     func sync(_ opened: [Portal]) {
+        for p in Array(faces.keys) where !opened.contains(p) {
+            faces.removeValue(forKey: p)?.removeFromSuperview()
+        }
         for p in opened where faces[p] == nil {
             let face = Face(session: model.session(p))
             faces[p] = face

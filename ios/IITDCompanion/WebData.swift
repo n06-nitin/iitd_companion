@@ -62,6 +62,8 @@ enum WebData {
 
     private static func isPortal(_ domain: String) -> Bool {
         let d = domain.hasPrefix(".") ? String(domain.dropFirst()) : domain
-        return d == "iitd.ac.in" || d.hasSuffix(".iitd.ac.in") || d == "devclub.in" || d.hasSuffix(".devclub.in")
+        return d == "iitd.ac.in" || d.hasSuffix(".iitd.ac.in") ||
+            d == "devclub.in" || d.hasSuffix(".devclub.in") ||
+            d == "piazza.com" || d.hasSuffix(".piazza.com")
     }
 }

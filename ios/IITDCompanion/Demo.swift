@@ -64,6 +64,8 @@ final class DemoServer: NSObject, WKURLSchemeHandler {
             case "eacademics.iitd.ac.in": reply = eacademics(path, query)
             case "exam.iitd.ac.in": reply = exam(path, query)
             case "classgrid.devclub.in": reply = page("classgrid")
+            case let h where h == "piazza.com" || h.hasSuffix(".piazza.com"):
+                reply = .body(Data("<!doctype html><html><body style='font:16px -apple-system,sans-serif;padding:24px'><h2>Piazza</h2><p>Demo mode · sign in with your Piazza account on a real account.</p></body></html>".utf8), mime: "text/html; charset=utf-8")
             case "oauth.iitd.ac.in": reply = oauth(query)
             default: reply = .notFound
             }

@@ -11,10 +11,14 @@ enum Portal: String, CaseIterable, Identifiable {
     case exam = "EXAM"
     // DevClub's timetable calendar, outside iitd.ac.in (see `isPortal`); signs in via DevClub SSO, then the IITD OAuth page
     case classgrid = "CLASSGRID"
+    // Course Q&A; uses its own separate login persisted via cookies (no Kerberos autofill)
+    case piazza = "PIAZZA"
+    // CSC services page for requesting or renewing IITD VPN3 access; opened from VpnSheet
+    case vpnRequest = "VPN_REQUEST"
 
-    /// The dock's tabs; the rest open on demand from the ⋮ menu.
-    static let dock: [Portal] = [.webmail, .moodleNew, .moodle, .rollcall]
-    static let more: [Portal] = allCases.filter { !dock.contains($0) }
+    /// Default 4-tab dock; users can swap any of `pickable` in or out.
+    static let defaultDock: [Portal] = [.webmail, .moodleNew, .moodle, .rollcall]
+    static let pickable: [Portal] = [.webmail, .moodleNew, .moodle, .rollcall, .eacademics, .exam, .classgrid, .piazza]
 
     var id: String { rawValue }
 
@@ -27,6 +31,8 @@ enum Portal: String, CaseIterable, Identifiable {
         case .eacademics: "eAcademics"
         case .exam: "Exam IITD"
         case .classgrid: "ClassGrid"
+        case .piazza: "Piazza"
+        case .vpnRequest: "Request VPN"
         }
     }
 
@@ -39,6 +45,8 @@ enum Portal: String, CaseIterable, Identifiable {
         case .eacademics: URL(string: "https://eacademics.iitd.ac.in/sportal/login")!
         case .exam: URL(string: "https://exam.iitd.ac.in/")!
         case .classgrid: URL(string: "https://classgrid.devclub.in/plan")!
+        case .piazza: URL(string: "https://piazza.com/class")!
+        case .vpnRequest: URL(string: "https://ldapweb.iitd.ac.in/usermanage/services.php")!
         }
     }
 
@@ -50,16 +58,27 @@ enum Portal: String, CaseIterable, Identifiable {
         case .moodle: ["moodle.iitd.ac.in"]
         case .rollcall: ["oauth.iitd.ac.in", "rollcall.iitd.ac.in"]
         case .eacademics, .exam, .classgrid: ["oauth.iitd.ac.in"]
+        case .piazza: []
+        case .vpnRequest: ["ldapweb.iitd.ac.in"]
         }
     }
 
-    /// nil for RollCall, eAcademics, Exam and ClassGrid, which drive their own OAuth flow via `RollCallScript`.
+    /// Plain username/password form; nil for OAuth portals and Piazza (which uses its own login).
     var login: LoginForm? {
         switch self {
         case .webmail: .webmail
         case .moodleNew: .moodleNew
         case .moodle: .moodle
-        case .rollcall, .eacademics, .exam, .classgrid: nil
+        case .vpnRequest: .csc
+        case .rollcall, .eacademics, .exam, .classgrid, .piazza: nil
+        }
+    }
+
+    /// Signs in via IITD's OAuth page using `RollCallScript`.
+    var usesOAuth: Bool {
+        switch self {
+        case .rollcall, .eacademics, .exam, .classgrid: true
+        default: false
         }
     }
 
@@ -73,6 +92,8 @@ enum Portal: String, CaseIterable, Identifiable {
         case .eacademics: "icon_history_edu"
         case .exam: "icon_event_seat"
         case .classgrid: "icon_calendar_month"
+        case .piazza: "icon_forum"
+        case .vpnRequest: "icon_vpn_key"
         }
     }
 
@@ -86,6 +107,8 @@ enum Portal: String, CaseIterable, Identifiable {
         case .eacademics: Tone(0xFFE0675A)
         case .exam: Tone(0xFFA98BF0)
         case .classgrid: Tone(0xFFE07BB5)
+        case .piazza: Tone(0xFFE8B84B)
+        case .vpnRequest: VpnAccent
         }
     }
 
@@ -95,7 +118,7 @@ enum Portal: String, CaseIterable, Identifiable {
 
     /// A plain login form (Moodle's arithmetic CAPTCHA included), so the app presses "Log in" itself.
     var autoLogin: Bool { login != nil }
-    var bootstrap: String { login?.bootstrap ?? RollCallScript.bootstrap }
+    var bootstrap: String? { login?.bootstrap ?? (usesOAuth ? RollCallScript.bootstrap : nil) }
 }
 
 /// One tab: its WebView plus the state the injected script reports back.
@@ -113,6 +136,7 @@ final class PortalSession {
     /// Has shown any page yet; until then the tab shows a placeholder face.
     private(set) var painted = false
     private(set) var loginFailed = false
+    private(set) var loginReady = false
     private(set) var captchaPending = false
     @ObservationIgnored private var captchaShownAt = Date.distantPast
     private(set) var courses: [String] = []
@@ -240,6 +264,7 @@ final class PortalSession {
         filled = false
         oauthClicked = false
         redirected = false
+        set(\.loginReady, false)
         set(\.captchaPending, false)
     }
 
@@ -253,7 +278,9 @@ final class PortalSession {
     fileprivate func pageFinished(_ w: WKWebView) { inject(w) }
 
     fileprivate func inject(_ w: WKWebView) {
-        w.evaluateJavaScript(portal.bootstrap + touchProbe, completionHandler: nil)
+        let script = isCscHost(w.url) ? LoginForm.csc.bootstrap : portal.bootstrap
+        if script == nil && page == "loading" { set(\.page, "in") }
+        w.evaluateJavaScript((script ?? "") + touchProbe, completionHandler: nil)
     }
 
     fileprivate func loadFailed(_ w: WKWebView, url: URL?, error: Error) {
@@ -277,6 +304,8 @@ final class PortalSession {
             } else if (o["captcha"] as? Bool) == true {
                 set(\.captchaPending, true)
                 captchaShownAt = Date()
+            } else if isCscHost() {
+                set(\.loginReady, true)
             }
         case "state":
             set(\.page, o["page"] as? String ?? "")
@@ -304,24 +333,38 @@ final class PortalSession {
                 if let url = portal.login?.loginUrl { webView?.load(URLRequest(url: resolve(url))) }
             }
         case "login":
-            if !filled && onLoginHost() {
-                filled = true
-                signingIn = true
-                if autoSubmitted { set(\.loginFailed, true) }
-                let submit = portal.autoLogin && !autoSubmitted
-                if submit { autoSubmitted = true }
-                run(portal.login?.fill(user: creds.kerberos, pass: creds.password, submit: submit)
-                    ?? RollCallScript.fillCreds(user: creds.kerberos, pass: creds.password))
+            if !filled {
+                let csc = isCscHost()
+                if csc || onLoginHost() {
+                    filled = true
+                    if csc {
+                        // fill credentials and let the user submit (services.php has a dropdown; vpn3cert has no session cookie)
+                        run(LoginForm.csc.fill(user: creds.kerberos, pass: creds.password, submit: false))
+                    } else {
+                        signingIn = true
+                        if autoSubmitted { set(\.loginFailed, true) }
+                        let submit = portal.autoLogin && !autoSubmitted
+                        if submit { autoSubmitted = true }
+                        run(portal.login?.fill(user: creds.kerberos, pass: creds.password, submit: submit)
+                            ?? RollCallScript.fillCreds(user: creds.kerberos, pass: creds.password))
+                    }
+                }
             }
         default:
             autoSubmitted = false
             set(\.loginFailed, false)
+            set(\.loginReady, false)
             set(\.captchaPending, false)
             if signingIn, let url = webView?.url, Demo.real(url).host == portal.home.host {
                 signingIn = false
                 if portal.returnsHome && url.path != portal.home.path { webView?.load(URLRequest(url: homeURL)) }
             }
         }
+    }
+
+    private func isCscHost(_ url: URL? = nil) -> Bool {
+        guard let u = url ?? webView?.url, u.scheme == "https", let host = u.host?.lowercased() else { return false }
+        return cscHosts.contains(host)
     }
 
     private func onLoginHost() -> Bool {
@@ -366,12 +409,17 @@ func isIitd(_ url: URL) -> Bool {
     return host == "iitd.ac.in" || host.hasSuffix(".iitd.ac.in")
 }
 
-/// Portals outside iitd.ac.in that still open inside their tab, with ClassGrid's sign-in.
-private let outsideHosts: Set<String> = ["classgrid.devclub.in", "auth.devclub.in"]
+/// CSC usermanage login pages (VPN request, client certificate / .ovpn download) that can open inside any tab.
+private let cscHosts: Set<String> = ["newcert.iitd.ac.in", "ldapweb.iitd.ac.in"]
+
+/// Portals outside iitd.ac.in that still open inside their tab (ClassGrid, Piazza).
+private let outsideHosts: Set<String> = ["classgrid.devclub.in", "auth.devclub.in", "piazza.com"]
 
 /// Stays inside the tab: the portals themselves, or demo mode's copies of them.
 func isPortal(_ url: URL) -> Bool {
-    isIitd(url) || url.scheme == Demo.scheme || (url.scheme == "https" && outsideHosts.contains(url.host?.lowercased() ?? ""))
+    let host = url.host?.lowercased() ?? ""
+    return isIitd(url) || url.scheme == Demo.scheme ||
+        (url.scheme == "https" && (outsideHosts.contains(host) || host.hasSuffix(".piazza.com")))
 }
 
 @MainActor

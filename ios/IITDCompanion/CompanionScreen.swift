@@ -7,17 +7,22 @@ final class CompanionModel {
     @ObservationIgnored let creds: Creds
     @ObservationIgnored let sessions: [Portal: PortalSession]
     @ObservationIgnored let swiper: TabSwiper
+    private(set) var dock: [Portal]
     /// Tabs with a live WebView. Only the open tab gets one at launch; once its page
     /// is up the rest warm up one at a time (sign-in-by-themselves portals first), so
     /// no WebView is ever built in the middle of a swipe.
     private(set) var opened: [Portal]
 
+    var more: [Portal] { Portal.pickable.filter { !dock.contains($0) } }
+
     init(creds: Creds) {
         self.creds = creds
-        sessions = Dictionary(uniqueKeysWithValues: Portal.dock.map { ($0, PortalSession(portal: $0, creds: creds)) })
-        let last = UserDefaults.standard.string(forKey: "lastTab").flatMap(Portal.init(rawValue:)).flatMap { Portal.dock.contains($0) ? $0 : nil }
-        let first = last ?? Portal.dock[0]
-        swiper = TabSwiper(initial: first)
+        let initialDock = loadDock()
+        dock = initialDock
+        sessions = Dictionary(uniqueKeysWithValues: Portal.pickable.map { ($0, PortalSession(portal: $0, creds: creds)) })
+        let last = UserDefaults.standard.string(forKey: "lastTab").flatMap(Portal.init(rawValue:)).flatMap { initialDock.contains($0) ? $0 : nil }
+        let first = last ?? initialDock[0]
+        swiper = TabSwiper(tabs: initialDock, initial: first)
         opened = [first]
     }
 
@@ -25,11 +30,22 @@ final class CompanionModel {
 
     func open(_ p: Portal) { if !opened.contains(p) { opened.append(p) } }
 
+    func updateDock(_ newDock: [Portal]) {
+        for p in opened where !newDock.contains(p) {
+            sessions[p]?.destroy()
+        }
+        opened.removeAll { !newDock.contains($0) }
+        dock = newDock
+        saveDock(newDock)
+        swiper.setTabs(newDock)
+        open(swiper.current)
+    }
+
     func warmUp() async {
         let first = session(swiper.current)
         for _ in 0..<60 where !first.painted { try? await Task.sleep(for: .milliseconds(50)) }
         // stable sort: auto sign-in portals first, otherwise in tab order
-        let order = Portal.dock.filter(\.autoLogin) + Portal.dock.filter { !$0.autoLogin }
+        let order = dock.filter(\.autoLogin) + dock.filter { !$0.autoLogin }
         for p in order where !opened.contains(p) {
             try? await Task.sleep(for: .milliseconds(700))
             if Task.isCancelled { return }
@@ -49,6 +65,8 @@ struct CompanionScreen: View {
     @State private var keyboardUp = false
     /// A portal opened from the ⋮ menu, shown over the tabs.
     @State private var more: Portal?
+    @State private var vpnOpen = false
+    @State private var editTabsOpen = false
 
     init(creds: Creds, onEditCreds: @escaping () -> Void, onForget: @escaping () -> Void) {
         self.onEditCreds = onEditCreds
@@ -62,8 +80,12 @@ struct CompanionScreen: View {
         let session = model.session(tab)
         ZStack {
             VStack(spacing: 0) {
-                TopBar(session: model.session(swiper.visual), onEditCreds: onEditCreds, onForget: onForget,
-                       onOpen: { p in withAnimation(tween(0.3)) { more = p } })
+                TopBar(session: model.session(swiper.visual), morePortals: model.more,
+                       onEditCreds: onEditCreds,
+                       onEditTabs: { withAnimation(tween(0.3)) { editTabsOpen = true } },
+                       onForget: onForget,
+                       onOpen: { p in withAnimation(tween(0.3)) { more = p } },
+                       onOpenVpn: { withAnimation(tween(0.3)) { vpnOpen = true } })
                     .swipeTabs(swiper)
 
                 PagesView(model: model, opened: model.opened)
@@ -79,10 +101,33 @@ struct CompanionScreen: View {
                 }
             }
 
+            if editTabsOpen {
+                EditTabsSheet(
+                    current: model.dock,
+                    onSave: { newDock in
+                        model.updateDock(newDock)
+                        withAnimation(tween(0.2)) { editTabsOpen = false }
+                        Task { await model.warmUp() }
+                    },
+                    onClose: { withAnimation(tween(0.2)) { editTabsOpen = false } }
+                )
+                .transition(.opacity.combined(with: .offset(y: 40)))
+                .zIndex(1)
+            }
+
+            if vpnOpen {
+                VpnSheet(
+                    onRequestVpn: { withAnimation(tween(0.3)) { more = .vpnRequest } },
+                    onClose: { withAnimation(tween(0.2)) { vpnOpen = false } }
+                )
+                .transition(.opacity.combined(with: .offset(y: 40)))
+                .zIndex(1)
+            }
+
             if let p = more {
                 MoreSheet(portal: p, creds: model.creds, onClose: { withAnimation(tween(0.2)) { more = nil } })
                     .transition(.opacity.combined(with: .offset(y: 40)))
-                    .zIndex(1)
+                    .zIndex(2)
             }
         }
         .task {
@@ -91,7 +136,7 @@ struct CompanionScreen: View {
             if let p = UserDefaults.standard.string(forKey: "ICDebugOpen").flatMap(Portal.init(rawValue:)) { more = p }
             if UserDefaults.standard.object(forKey: "ICDebugTurn") != nil {
                 let f = UserDefaults.standard.double(forKey: "ICDebugTurn")
-                Portal.dock.forEach(model.open)
+                model.dock.forEach(model.open)
                 try? await Task.sleep(for: .seconds(UserDefaults.standard.double(forKey: "ICDebugTurnDelay")))
                 swiper.freeze(at: f)
                 return
@@ -129,6 +174,7 @@ struct CompanionScreen: View {
     case "login" where s.captchaPending:
         // no LoginForm means the IITD OAuth page (RollCall, eAcademics, Exam)
         return (s.portal.login == nil ? "Type the CAPTCHA, then Login" : "Answer the CAPTCHA, then Go", s.portal.accent)
+    case "login" where s.loginReady: return ("Login filled · tap to sign in", s.portal.accent)
     case "login": return ("Signing in…", Caution)
     case "home" where s.portal == .rollcall: return ("Pick a course below", s.portal.accent)
     default: return (s.portal.label, s.portal.accent)
@@ -137,9 +183,12 @@ struct CompanionScreen: View {
 
 private struct TopBar: View {
     let session: PortalSession
+    let morePortals: [Portal]
     let onEditCreds: () -> Void
+    let onEditTabs: () -> Void
     let onForget: () -> Void
     let onOpen: (Portal) -> Void
+    let onOpenVpn: () -> Void
 
     var body: some View {
         let (label, dot) = statusOf(session)
@@ -151,13 +200,15 @@ private struct TopBar: View {
                     Button("Open in browser") {
                         openExternally(Demo.real(session.webView?.url ?? session.portal.home))
                     }
+                    Button("Edit tabs", action: onEditTabs)
                     Button("Edit saved login", action: onEditCreds)
                     Button("Forget login & sign out", action: onForget)
                     Button("Privacy policy") { openExternally(privacyPolicyURL) }
                     Section("More") {
-                        ForEach(Portal.more) { p in
+                        ForEach(morePortals) { p in
                             Button { onOpen(p) } label: { Label(p.label, image: p.icon) }
                         }
+                        Button(action: onOpenVpn) { Label("IITD VPN", image: "icon_vpn_key") }
                     }
                 } label: {
                     ClayIconFace {
@@ -250,7 +301,7 @@ private struct TabBar: View {
         ZStack {
             Pills(swiper: swiper, height: dockHeight)
             HStack(spacing: 0) {
-                ForEach(Portal.dock) { p in
+                ForEach(model.dock) { p in
                     TabItem(portal: p, session: model.session(p), active: p == swiper.visual)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .contentShape(Rectangle())
@@ -275,7 +326,7 @@ private struct Pills: View {
 
     var body: some View {
         GeometryReader { g in
-            let count = CGFloat(Portal.dock.count)
+            let count = CGFloat(swiper.tabs.count)
             let itemWidth = g.size.width / count
             let progress = swiper.progress
             let stretch = sin(.pi * progress)

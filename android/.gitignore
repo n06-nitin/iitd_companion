@@ -20,3 +20,6 @@ keystore.properties
 
 # store/social assets kept local
 StoreListing/
+
+# personal debug-only extras (see DebugAddon.kt)
+debug-addon.gradle

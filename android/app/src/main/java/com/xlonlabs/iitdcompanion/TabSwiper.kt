@@ -35,8 +35,9 @@ import kotlin.math.sign
  * from there, so quick repeated swipes chain round the ring.
  */
 @Stable
-class TabSwiper(private val scope: CoroutineScope, initial: Portal) {
-    private val tabs = Portal.dock
+class TabSwiper(private val scope: CoroutineScope, initialTabs: List<Portal>, initial: Portal) {
+    var tabs by mutableStateOf(initialTabs)
+        private set
 
     var current by mutableStateOf(initial)
         private set
@@ -70,12 +71,21 @@ class TabSwiper(private val scope: CoroutineScope, initial: Portal) {
         }
     }
 
+    fun updateTabs(newTabs: List<Portal>) {
+        if (newTabs.isEmpty()) return
+        job?.cancel()
+        job = null
+        generation++
+        tabs = newTabs
+        settle(if (current in newTabs) current else newTabs.first())
+    }
+
     /**
      * Fractional tab index for the sliding dock pill. It can run past either end
      * (-1..size) while wrapping round; the dock draws the overflow on the other side.
      */
     fun indicator(): Float {
-        val from = tabs.indexOf(current).toFloat()
+        val from = tabs.indexOf(current).coerceAtLeast(0).toFloat()
         return if (target == null) from else from + progress * step
     }
 
@@ -107,7 +117,7 @@ class TabSwiper(private val scope: CoroutineScope, initial: Portal) {
             return
         }
         step = if (raw < 0f) 1 else -1
-        target = tabs[(tabs.indexOf(current) + step).mod(tabs.size)]
+        target = tabs[(tabs.indexOf(current).coerceAtLeast(0) + step).mod(tabs.size)]
         offset = raw.coerceIn(-width, width)
     }
 
@@ -127,8 +137,8 @@ class TabSwiper(private val scope: CoroutineScope, initial: Portal) {
     /** Tapped a tab: turn the short way round the ring towards it. */
     fun goTo(p: Portal) {
         finishNow()
-        if (p == current) return
-        val ahead = (tabs.indexOf(p) - tabs.indexOf(current)).mod(tabs.size)
+        if (p == current || p !in tabs) return
+        val ahead = (tabs.indexOf(p) - tabs.indexOf(current).coerceAtLeast(0)).mod(tabs.size)
         step = if (ahead <= tabs.size / 2) ahead else ahead - tabs.size
         target = p
         val end = if (step > 0) -width else width

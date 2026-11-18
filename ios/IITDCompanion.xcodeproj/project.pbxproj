@@ -17,7 +17,9 @@
 		2B5D09F42B421AF7C818B2AE /* IITDCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5893B9184810B28D89EFFC52 /* IITDCompanionApp.swift */; };
 		2CE6DEEF5842C79A51BA3270 /* OFL-BricolageGrotesque.txt in Resources */ = {isa = PBXBuildFile; fileRef = CD89B6DBE3D1D6B843A79708 /* OFL-BricolageGrotesque.txt */; };
 		3E2A2B657AB63741D4440C30 /* SecureCreds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E3C3C171E62C2A406C7598E /* SecureCreds.swift */; };
+		41341852E4771B519478C8C0 /* EditTabsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ADCE716323F72752A6F1BF4 /* EditTabsSheet.swift */; };
 		4BCEC6F668DC69E6157DE7E2 /* BricolageGrotesque.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 86584DE03699546D8BF34362 /* BricolageGrotesque.ttf */; };
+		4ECFD913F83943006B2011B1 /* VpnSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C640BFC0AE804B1322921C5C /* VpnSheet.swift */; };
 		51141B7AE9DF0DD03D01B520 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C891C516A33849D93E5DDF10 /* PrivacyInfo.xcprivacy */; };
 		55CD6430EAD3A448EDC892B6 /* exam.html in Resources */ = {isa = PBXBuildFile; fileRef = 1367C20EA5E04D130DEE4ACE /* exam.html */; };
 		68EE9D611070317B6073769C /* eacademics.html in Resources */ = {isa = PBXBuildFile; fileRef = 9DBBC18DDA6C8E47B867C6D1 /* eacademics.html */; };
@@ -45,6 +47,7 @@
 /* Begin PBXFileReference section */
 		0877F73BB99ED8D4CFC3E7DB /* oauth-login.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "oauth-login.html"; sourceTree = "<group>"; };
 		1367C20EA5E04D130DEE4ACE /* exam.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = exam.html; sourceTree = "<group>"; };
+		1ADCE716323F72752A6F1BF4 /* EditTabsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditTabsSheet.swift; sourceTree = "<group>"; };
 		1DA3CC621F0460F6FF8D5B80 /* RollCallScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollCallScript.swift; sourceTree = "<group>"; };
 		23862DA34B30534E98AC3621 /* IITDCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = IITDCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2774C61A8429ABC703808F57 /* Lecture-01.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Lecture-01.pdf"; sourceTree = "<group>"; };
@@ -71,6 +74,7 @@
 		AB7D08DB6A663E3B9F82C22E /* demo.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = demo.css; sourceTree = "<group>"; };
 		B2ED2D2C0AB00CB29D1AEB9F /* PortalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortalSession.swift; sourceTree = "<group>"; };
 		C18BA2EDD251922845713893 /* exam-landing.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "exam-landing.html"; sourceTree = "<group>"; };
+		C640BFC0AE804B1322921C5C /* VpnSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VpnSheet.swift; sourceTree = "<group>"; };
 		C891C516A33849D93E5DDF10 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		CD89B6DBE3D1D6B843A79708 /* OFL-BricolageGrotesque.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-BricolageGrotesque.txt"; sourceTree = "<group>"; };
 		D40B27D52DD53FDDFCEAE9A6 /* PagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagesView.swift; sourceTree = "<group>"; };
@@ -95,6 +99,7 @@
 				89938A087CAF8C30456569DB /* Assets.xcassets */,
 				A7FE929CD97C2756B9D1D61A /* CompanionScreen.swift */,
 				8D7766EF53EA58E4D6932F8B /* Demo.swift */,
+				1ADCE716323F72752A6F1BF4 /* EditTabsSheet.swift */,
 				5893B9184810B28D89EFFC52 /* IITDCompanionApp.swift */,
 				8B5B3B2708F356CDF78AE1BD /* Info.plist */,
 				900D62E001ECBA8C590AE669 /* LoginScript.swift */,
@@ -106,6 +111,7 @@
 				3BE1C8ED2F2D09294B14500B /* SetupScreen.swift */,
 				DAF74AF6107ED3C2ED353EA8 /* TabSwiper.swift */,
 				2BE99FF9D3CDA1514FBCB5B5 /* Ui.swift */,
+				C640BFC0AE804B1322921C5C /* VpnSheet.swift */,
 				F1EDA4DD580A98957519975D /* WebData.swift */,
 				497CE120BF143653F9DF4019 /* Resources */,
 			);
@@ -247,6 +253,7 @@
 			files = (
 				C1100BB31A630E1E0B64CFEB /* CompanionScreen.swift in Sources */,
 				D9759B03FB862083050C805F /* Demo.swift in Sources */,
+				41341852E4771B519478C8C0 /* EditTabsSheet.swift in Sources */,
 				2B5D09F42B421AF7C818B2AE /* IITDCompanionApp.swift in Sources */,
 				BEF689CD75A402BE582BA26B /* LoginScript.swift in Sources */,
 				FA2F0DFEEE31FF70CF6769D2 /* PagesView.swift in Sources */,
@@ -256,6 +263,7 @@
 				E55BDF0C716F7DD288D6A371 /* SetupScreen.swift in Sources */,
 				9600671DF8305749326209CE /* TabSwiper.swift in Sources */,
 				09747543BD3CF7C63B551BE7 /* Ui.swift in Sources */,
+				4ECFD913F83943006B2011B1 /* VpnSheet.swift in Sources */,
 				D9E5322CB90A1814AD41ED7E /* WebData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -297,7 +305,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -316,7 +324,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.4;
+				MARKETING_VERSION = 1.1.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -382,7 +390,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -395,7 +403,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.4;
+				MARKETING_VERSION = 1.1.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

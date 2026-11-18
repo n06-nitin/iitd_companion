@@ -62,6 +62,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.VpnKey
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -188,22 +189,25 @@ private fun clearWebData() {
 private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () -> Unit) {
     val ctx = LocalContext.current
     val prefs = remember { ctx.getSharedPreferences("ui", Context.MODE_PRIVATE) }
-    val sessions = remember(creds) { Portal.dock.associateWith { PortalSession(it, creds) } }
+    var dock by remember { mutableStateOf(loadDock(prefs)) }
+    val moreList = remember(dock) { Portal.pickable.filterNot { it in dock } }
+    // sessions are lightweight until their WebView is created for an opened dock tab
+    val sessions = remember(creds) { Portal.pickable.associateWith { PortalSession(it, creds) } }
     DisposableEffect(sessions) { onDispose { sessions.values.forEach { it.destroy() } } }
 
     val scope = rememberCoroutineScope()
     val swiper = remember {
-        TabSwiper(scope, Portal.dock.firstOrNull { it.name == prefs.getString("lastTab", null) } ?: Portal.dock.first())
+        TabSwiper(scope, dock, dock.firstOrNull { it.name == prefs.getString("lastTab", null) } ?: dock.first())
     }
     val tab = swiper.current
     // Tabs with a live WebView. Only the open tab gets one at launch; once its page
     // is up the rest warm up one at a time (sign-in-by-themselves portals first), so
     // no WebView is ever built in the middle of a swipe.
     val opened = remember { mutableStateListOf(tab) }
-    LaunchedEffect(sessions) {
-        val first = sessions.getValue(tab)
+    LaunchedEffect(sessions, dock) {
+        val first = sessions.getValue(swiper.current)
         withTimeoutOrNull(3000) { snapshotFlow { first.painted }.first { it } }
-        Portal.dock.sortedByDescending { it.autoLogin }.forEach {
+        dock.sortedByDescending { it.autoLogin }.forEach {
             if (it !in opened) {
                 delay(700)
                 // the user may have opened it during the wait; a second face would fight over its WebView
@@ -256,15 +260,20 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
 
     // a portal opened from the ⋮ menu, shown over the tabs
     var more by remember { mutableStateOf<Portal?>(null) }
+    var vpnOpen by remember { mutableStateOf(false) }
+    var editTabsOpen by remember { mutableStateOf(false) }
 
     val keyboardUp = WindowInsets.isImeVisible
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().imePadding()) {
             TopBar(
                 session = sessions.getValue(swiper.visual),
+                morePortals = moreList,
                 onEditCreds = onEditCreds,
+                onEditTabs = { editTabsOpen = true },
                 onForget = onForget,
                 onOpen = { more = it },
+                onOpenVpn = { vpnOpen = true },
                 modifier = Modifier.swipeTabs(swiper),
             )
 
@@ -325,12 +334,47 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
             if (!keyboardUp) {
                 if (tab == Portal.ROLLCALL) RollCallBar(session)
                 TabBar(
+                    tabs = dock,
                     swiper = swiper,
                     sessions = sessions,
                     // tapping the open tab again goes back to that portal's home page
                     onSelect = { p -> if (p == tab) sessions.getValue(p).home() else swiper.goTo(p) }
                 )
             }
+        }
+
+        AnimatedVisibility(
+            visible = editTabsOpen,
+            enter = fadeIn(tween(250)) + slideInVertically(tween(300)) { it / 12 },
+            exit = fadeOut(tween(200))
+        ) {
+            EditTabsSheet(
+                current = dock,
+                onSave = { newDock ->
+                    // destroy WebViews of portals removed from the dock
+                    opened.filterNot { it in newDock }.forEach { removed ->
+                        sessions.getValue(removed).destroy()
+                        opened.remove(removed)
+                    }
+                    dock = newDock
+                    saveDock(prefs, newDock)
+                    swiper.updateTabs(newDock)
+                    if (swiper.current !in opened) opened += swiper.current
+                    editTabsOpen = false
+                },
+                onClose = { editTabsOpen = false }
+            )
+        }
+
+        AnimatedVisibility(
+            visible = vpnOpen,
+            enter = fadeIn(tween(250)) + slideInVertically(tween(300)) { it / 12 },
+            exit = fadeOut(tween(200))
+        ) {
+            VpnSheet(
+                onRequestVpn = { more = Portal.VPN_REQUEST },
+                onClose = { vpnOpen = false }
+            )
         }
 
         AnimatedContent(
@@ -413,6 +457,7 @@ private fun statusOf(s: PortalSession): Pair<String, Color> = when {
     s.page == "login" && s.captchaPending ->
         // no LoginForm means the IITD OAuth page (RollCall, eAcademics, Exam)
         (if (s.portal.login == null) "Type the CAPTCHA, then Login" else "Answer the CAPTCHA, then Go") to s.portal.accent
+    s.page == "login" && s.loginReady -> "Login filled · tap to sign in" to s.portal.accent
     s.page == "login" -> "Signing in…" to Caution
     s.page == "home" && s.portal == Portal.ROLLCALL -> "Pick a course below" to s.portal.accent
     else -> s.portal.label to s.portal.accent
@@ -421,9 +466,12 @@ private fun statusOf(s: PortalSession): Pair<String, Color> = when {
 @Composable
 private fun TopBar(
     session: PortalSession,
+    morePortals: List<Portal>,
     onEditCreds: () -> Unit,
+    onEditTabs: () -> Unit,
     onForget: () -> Unit,
     onOpen: (Portal) -> Unit,
+    onOpenVpn: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val ctx = LocalContext.current
@@ -445,6 +493,8 @@ private fun TopBar(
                         val url = session.webView?.url ?: session.portal.home
                         runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
                     })
+                    DropdownMenuItem(text = { Text("Edit tabs") },
+                        onClick = { menuOpen = false; onEditTabs() })
                     DropdownMenuItem(text = { Text("Edit saved login") },
                         onClick = { menuOpen = false; onEditCreds() })
                     DropdownMenuItem(text = { Text("Forget login & sign out") },
@@ -452,13 +502,18 @@ private fun TopBar(
                     HorizontalDivider(Modifier.padding(vertical = 4.dp), color = Faint)
                     Text("MORE", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
-                    Portal.more.forEach { p ->
+                    morePortals.forEach { p ->
                         DropdownMenuItem(
                             text = { Text(p.label) },
                             leadingIcon = { Icon(p.icon, contentDescription = null, tint = p.accent) },
                             onClick = { menuOpen = false; onOpen(p) }
                         )
                     }
+                    DropdownMenuItem(
+                        text = { Text("IITD VPN") },
+                        leadingIcon = { Icon(Icons.Rounded.VpnKey, contentDescription = null, tint = VpnAccent) },
+                        onClick = { menuOpen = false; onOpenVpn() }
+                    )
                 }
             }
         }
@@ -484,7 +539,12 @@ private fun PageProgress(session: PortalSession) {
  * mid-swipe and shifts from one portal's hue to the next.
  */
 @Composable
-private fun TabBar(swiper: TabSwiper, sessions: Map<Portal, PortalSession>, onSelect: (Portal) -> Unit) {
+private fun TabBar(
+    tabs: List<Portal>,
+    swiper: TabSwiper,
+    sessions: Map<Portal, PortalSession>,
+    onSelect: (Portal) -> Unit,
+) {
     Box(
         Modifier
             .fillMaxWidth()
@@ -495,7 +555,7 @@ private fun TabBar(swiper: TabSwiper, sessions: Map<Portal, PortalSession>, onSe
             .padding(6.dp)
     ) {
         BoxWithConstraints(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp))) {
-            val itemWidth = maxWidth / Portal.dock.size
+            val itemWidth = maxWidth / tabs.size
             // one pill per lap: when the ring wraps, it slides off one end and in at the other
             for (lap in -1..1) {
                 Box(
@@ -506,7 +566,7 @@ private fun TabBar(swiper: TabSwiper, sessions: Map<Portal, PortalSession>, onSe
                             val h = DockHeight.roundToPx()
                             val placeable = measurable.measure(Constraints.fixed(w, h))
                             layout(w, h) {
-                                val slot = swiper.indicator() + lap * Portal.dock.size
+                                val slot = swiper.indicator() + lap * tabs.size
                                 placeable.place((itemWidth.toPx() * (slot + 0.5f) - w / 2f).roundToInt(), 0)
                             }
                         }
@@ -515,7 +575,7 @@ private fun TabBar(swiper: TabSwiper, sessions: Map<Portal, PortalSession>, onSe
                 )
             }
             Row(Modifier.fillMaxWidth().height(DockHeight)) {
-                Portal.dock.forEach { p ->
+                tabs.forEach { p ->
                     val active = p == swiper.visual
                     val s = sessions.getValue(p)
                     // needs you: waiting for a CAPTCHA, or auto sign-in failed

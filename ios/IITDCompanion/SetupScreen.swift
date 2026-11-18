@@ -135,7 +135,7 @@ struct SetupScreen: View {
 private struct PortalDots: View {
     var body: some View {
         HStack(spacing: 10) {
-            ForEach(Portal.dock) { p in
+            ForEach(Portal.defaultDock) { p in
                 ClaySlab(color: p.accent, radius: 4, depth: 0)
                     .clipShape(Circle())
                     .frame(width: 8, height: 8)

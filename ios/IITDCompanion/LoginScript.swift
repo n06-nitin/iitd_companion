@@ -53,6 +53,11 @@ struct LoginForm {
         form: "form#login-form", user: "#rcmloginuser", pass: "#rcmloginpwd", submit: "#rcmloginsubmit",
         error: "#messagestack .error"
     )
+    /// CSC usermanage pages (client certificate / .ovpn download, VPN & service requests).
+    static let csc = LoginForm(
+        form: "form", user: "input[name='user']", pass: "input[name='passwd']", submit: "input[type='submit']",
+        error: ""
+    )
 
     private static let script = #"""
 (function(){

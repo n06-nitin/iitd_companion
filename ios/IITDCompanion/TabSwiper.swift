@@ -11,7 +11,7 @@ import UIKit.UIGestureRecognizerSubclass
 /// from there, so quick repeated swipes chain round the ring.
 @Observable @MainActor
 final class TabSwiper {
-    @ObservationIgnored private let tabs = Portal.dock
+    private(set) var tabs: [Portal]
 
     private(set) var current: Portal
     /// The tab being revealed, if any.
@@ -34,9 +34,19 @@ final class TabSwiper {
     /// Fling speed that commits or cancels a turn (Android's 700 px/s).
     static let flingVelocity: CGFloat = 270
 
-    init(initial: Portal) {
+    init(tabs: [Portal], initial: Portal) {
+        self.tabs = tabs
         current = initial
         visual = initial
+    }
+
+    func setTabs(_ newTabs: [Portal]) {
+        guard !newTabs.isEmpty else { return }
+        animation?.cancel()
+        animation = nil
+        generation += 1
+        tabs = newTabs
+        settle(newTabs.contains(current) ? current : newTabs[0])
     }
 
     var progress: CGFloat { min(max(abs(offset) / width, 0), 1) }
@@ -52,7 +62,7 @@ final class TabSwiper {
     /// Fractional tab index for the sliding dock pill. It can run past either end
     /// (-1..size) while wrapping round; the dock draws the overflow on the other side.
     func indicator() -> CGFloat {
-        let from = CGFloat(tabs.firstIndex(of: current)!)
+        let from = CGFloat(tabs.firstIndex(of: current) ?? 0)
         return target == nil ? from : from + progress * CGFloat(step)
     }
 
@@ -86,7 +96,7 @@ final class TabSwiper {
             return
         }
         step = raw < 0 ? 1 : -1
-        target = tabs[mod(tabs.firstIndex(of: current)! + step, tabs.count)]
+        target = tabs[mod((tabs.firstIndex(of: current) ?? 0) + step, tabs.count)]
         offset = min(max(raw, -width), width)
         changed()
     }
@@ -106,8 +116,8 @@ final class TabSwiper {
     /// Tapped a tab: turn the short way round the ring towards it.
     func goTo(_ p: Portal) {
         finishNow()
-        if p == current { return }
-        let ahead = mod(tabs.firstIndex(of: p)! - tabs.firstIndex(of: current)!, tabs.count)
+        guard p != current, let to = tabs.firstIndex(of: p) else { return }
+        let ahead = mod(to - (tabs.firstIndex(of: current) ?? 0), tabs.count)
         step = ahead <= tabs.count / 2 ? ahead : ahead - tabs.count
         target = p
         let end = step > 0 ? -width : width

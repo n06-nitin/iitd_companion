@@ -50,6 +50,8 @@ object Demo {
             host == "eacademics.iitd.ac.in" -> eacademics(ctx, path, url)
             host == "exam.iitd.ac.in" -> exam(ctx, path, url)
             host == "classgrid.devclub.in" -> page(ctx, "classgrid")
+            host == "piazza.com" || host.endsWith(".piazza.com") ->
+                html("<!doctype html><html><body style='font:16px sans-serif;padding:24px'><h2>Piazza</h2><p>Demo mode · sign in with your Piazza account on a real account.</p></body></html>")
             host == "oauth.iitd.ac.in" -> oauth(ctx, url)
             else -> null
         }
