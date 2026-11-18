@@ -4,7 +4,7 @@
 
 # IITD Companion
 
-**The IIT Delhi app for Webmail, Moodle, RollCall, eAcademics, exam seat plans and ClassGrid: one sign-in, every portal.**
+**The IIT Delhi app for Webmail, Moodle, RollCall, eAcademics, exam seat plans, ClassGrid and Piazza: one swipe apart.**
 
 A free, open-source Android and iPhone app for IIT Delhi students. It signs you in to IIT Delhi's portals with your Kerberos ID and keeps them all one swipe apart.
 
@@ -14,7 +14,7 @@ A free, open-source Android and iPhone app for IIT Delhi students. It signs you 
 ![Platform: iOS](https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF?logo=kotlin&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-SwiftUI-F05138?logo=swift&logoColor=white)
-![License: MIT](https://img.shields.io/badge/License-MIT-blue)
+![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue)
 
 <img src="docs/images/feature-1024x500.png" alt="IITD Companion: IIT Delhi Webmail, Moodle New, Moodle and RollCall in one app" width="720">
 
@@ -22,7 +22,7 @@ A free, open-source Android and iPhone app for IIT Delhi students. It signs you 
 
 ## What is IITD Companion?
 
-IITD Companion is an unofficial mobile app that puts IIT Delhi's most-used websites into one place: **Webmail**, **Moodle New**, **Moodle**, **RollCall**, **eAcademics**, **Exam IITD** (exam seat plan) and DevClub's **ClassGrid** timetable. You save your Kerberos ID and password once, and the app fills in each portal's login page for you. Each portal opens in its own tab, and you swipe between them.
+IITD Companion is an unofficial mobile app that puts IIT Delhi's most-used websites into one place: **Webmail**, **Moodle New**, **Moodle**, **RollCall**, **eAcademics**, **Exam IITD** (exam seat plan), DevClub's **ClassGrid** timetable and **Piazza**. You save your Kerberos ID and password once, and the app fills in each IIT Delhi login page for you. Each portal opens in its own tab, and you swipe between them.
 
 It is made by an IIT Delhi student, for IIT Delhi students: [Nitin Singh](#about-the-developer), a third-year student living in Aravali Hostel, under his studio [XLON Labs](https://xlonlabs.com). It is not affiliated with or endorsed by IIT Delhi.
 
@@ -44,7 +44,10 @@ It is made by an IIT Delhi student, for IIT Delhi students: [Nitin Singh](#about
 - **Type only the CAPTCHA on IIT Delhi's sign-in page.** RollCall, eAcademics, Exam IITD and ClassGrid all sign in there. The app fills in your ID and password; you type the image CAPTCHA yourself. The app does not read image CAPTCHAs.
 - **RollCall attendance with the QR scanner.** The camera works inside the RollCall tab for marking attendance.
 - **eAcademics** and **Exam IITD** open from the ⋮ menu, signed in through the same IIT Delhi OAuth page as RollCall.
-- **ClassGrid**, DevClub's timetable, opens from the ⋮ menu on its Plan page. The app presses through DevClub's sign-in to IIT Delhi's, so you only type the CAPTCHA.
+- **ClassGrid**, DevClub's timetable, opens from the ⋮ menu on its Plan page and stays signed in via cookies.
+- **Piazza**, for course Q&A, uses your own Piazza login and stays signed in via cookies.
+- **Customizable bottom dock.** Open ⋮ → *Edit tabs* to pick any 4 portals for the dock and reorder them.
+- **IITD VPN helper.** Open ⋮ → *IITD VPN* to request VPN access from CSC, download your `.ovpn` file from Webmail with login autofill, and hand it off to OpenVPN Connect.
 - **Swipe between tabs.** Every portal stays loaded, so switching is instant. Tapping the open tab again takes that portal back home.
 - **Downloads that land where you expect.** Moodle and Webmail files go to Downloads on Android and to the Files app on iPhone.
 - **Native on both platforms.** Kotlin and Jetpack Compose on Android, Swift and SwiftUI on iOS. Not a cross-platform wrapper.
@@ -59,7 +62,9 @@ It is made by an IIT Delhi student, for IIT Delhi students: [Nitin Singh](#about
 | RollCall | `rollcall.iitd.ac.in` via `oauth.iitd.ac.in` | You type the CAPTCHA |
 | eAcademics | `eacademics.iitd.ac.in` via `oauth.iitd.ac.in` | You type the CAPTCHA |
 | Exam IITD | `exam.iitd.ac.in` via `oauth.iitd.ac.in` | You type the CAPTCHA |
-| ClassGrid (DevClub) | `classgrid.devclub.in` via `auth.devclub.in` and `oauth.iitd.ac.in` | You type the CAPTCHA |
+| ClassGrid (DevClub) | `classgrid.devclub.in` via `auth.devclub.in` and `oauth.iitd.ac.in` | You type the CAPTCHA (stays signed in) |
+| Piazza | `piazza.com` | Your own Piazza login (stays signed in) |
+| IITD VPN (CSC) | `ldapweb.iitd.ac.in`, `newcert.iitd.ac.in` | Login autofilled; `.ovpn` opens in OpenVPN Connect |
 
 ## Privacy and security
 
@@ -101,7 +106,7 @@ Yes. Open the RollCall tab and allow camera access when asked. The QR scanner on
 On Android, to your Downloads folder. On iPhone, to the Files app, under *On My iPhone › IITD Companion › Downloads*.
 
 ### Is the app free?
-Yes. It is free, has no ads, and is open source under the MIT license.
+Yes. It is free, has no ads, and is open source under the GNU GPLv3 license.
 
 More answers are on the [support page](https://n06-nitin.github.io/iitd_companion/support.html).
 
@@ -153,6 +158,8 @@ IITD Companion is designed and built by **Nitin Singh**, a third-year student at
 
 ## License
 
-[MIT](LICENSE) © 2026 Nitin Singh (XLON Labs)
+[GNU GPLv3](LICENSE) © 2026 Nitin Singh (XLON Labs)
+
+IITD Companion is licensed under GPLv3 so that any fork or redistribution built on this code must remain free, open, and publicly auditable — keeping students' credentials safe from closed-source or ad-stuffed clones.
 
 <sub>IITD Companion is not affiliated with, endorsed by or sponsored by the Indian Institute of Technology Delhi. "IIT Delhi" and the portal names belong to their owners and are used only to describe what the app works with.</sub>
