@@ -15,48 +15,50 @@
       background-color: #141518;
       color: #ECE7DE;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-      padding: 12px 14px 40px 14px;
-      line-height: 1.4;
+      padding: 18px 18px 80px 18px;
+      line-height: 1.5;
       overflow-x: hidden;
+      max-width: 680px;
+      margin: 0 auto;
     }
 
     /* Intro Mission Card */
     .intro-card {
       background: #1A1B1F;
       border: 1px solid rgba(94, 91, 86, 0.25);
-      border-radius: 18px;
-      padding: 12px 14px;
+      border-radius: 20px;
+      padding: 16px 18px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 14px;
+      margin-bottom: 24px;
     }
     .intro-icon {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       background: #F2C14E;
-      border-radius: 10px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
     }
     .intro-text {
-      font-size: 12.5px;
+      font-size: 13px;
       color: #ECE7DE;
-      line-height: 17px;
+      line-height: 19px;
     }
 
     /* Promotional / Sponsor Banner (Easy to customize or toggle) */
     .promo-card {
       background: linear-gradient(135deg, rgba(242, 193, 78, 0.12), rgba(34, 36, 42, 0.9));
       border: 1px solid rgba(242, 193, 78, 0.35);
-      border-radius: 18px;
-      padding: 14px;
-      margin-bottom: 16px;
+      border-radius: 20px;
+      padding: 16px 18px;
+      margin-bottom: 24px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
     .promo-header {
       display: flex;
@@ -70,26 +72,26 @@
       text-transform: uppercase;
       background: #F2C14E;
       color: #141518;
-      padding: 2px 7px;
+      padding: 3px 8px;
       border-radius: 6px;
     }
     .promo-title {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       color: #ECE7DE;
     }
     .promo-desc {
-      font-size: 12px;
+      font-size: 12.5px;
       color: #8C8880;
     }
 
     /* Category Filter Chips */
     .category-chips {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       overflow-x: auto;
-      padding-bottom: 10px;
-      margin-bottom: 14px;
+      padding-bottom: 12px;
+      margin-bottom: 28px;
       scrollbar-width: none;
     }
     .category-chips::-webkit-scrollbar { display: none; }
@@ -97,9 +99,9 @@
       background: #22242A;
       color: #ECE7DE;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 8px 14px;
-      font-size: 12px;
+      border-radius: 16px;
+      padding: 9px 16px;
+      font-size: 12.5px;
       font-weight: 600;
       white-space: nowrap;
       cursor: pointer;
@@ -113,32 +115,37 @@
       border-color: #F2C14E;
     }
 
+    /* Category Section Wrapper */
+    .category-section {
+      margin-bottom: 38px;
+    }
+
     /* Section Headers */
     .section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 2px 8px 2px;
+      padding: 14px 4px 14px 4px;
       border-bottom: 1px solid rgba(94, 91, 86, 0.25);
-      margin-bottom: 12px;
-      margin-top: 6px;
+      margin-bottom: 20px;
+      margin-top: 8px;
     }
     .section-title-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .section-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 9px;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 15px;
     }
     .section-title {
-      font-size: 15px;
+      font-size: 16.5px;
       font-weight: 700;
       color: #ECE7DE;
       letter-spacing: -0.2px;
@@ -146,9 +153,9 @@
     .section-badge {
       background: #1A1B1F;
       border: 1px solid rgba(94, 91, 86, 0.3);
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11.5px;
       font-weight: 600;
     }
 
@@ -156,26 +163,26 @@
     .cards-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 22px;
       margin-bottom: 16px;
     }
     .card {
       background: #22242A;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      padding: 15px;
-      box-shadow: 0 4px 14px rgba(4, 4, 5, 0.5);
+      border-radius: 22px;
+      padding: 18px 18px;
+      box-shadow: 0 4px 16px rgba(4, 4, 5, 0.5);
     }
     .card-header {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
+      gap: 14px;
       cursor: pointer;
     }
     .perk-icon-wrap {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -186,7 +193,7 @@
       min-width: 0;
     }
     .card-title {
-      font-size: 14.5px;
+      font-size: 15.5px;
       font-weight: 700;
       color: #ECE7DE;
       white-space: nowrap;
@@ -195,15 +202,15 @@
     }
     .badge-pill {
       display: inline-block;
-      margin-top: 4px;
-      padding: 2px 7px;
-      border-radius: 7px;
-      font-size: 11px;
+      margin-top: 5px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 11.5px;
       font-weight: 700;
     }
     .expand-btn {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -214,29 +221,29 @@
       transform: rotate(180deg);
     }
     .card-desc {
-      font-size: 12.5px;
+      font-size: 13px;
       color: #8C8880;
-      margin-top: 9px;
-      line-height: 17px;
+      margin-top: 12px;
+      line-height: 19px;
     }
 
     /* Horizontal Image Carousel (3-4 images) */
     .images-carousel {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       overflow-x: auto;
-      margin-top: 12px;
-      padding-bottom: 4px;
+      margin-top: 16px;
+      padding-bottom: 6px;
       scrollbar-width: none;
     }
     .images-carousel::-webkit-scrollbar { display: none; }
     .image-mockup {
-      width: 190px;
-      height: 115px;
+      width: 205px;
+      height: 122px;
       background: #1A1B1F;
       border: 1px solid rgba(94, 91, 86, 0.25);
-      border-radius: 16px;
-      padding: 10px;
+      border-radius: 18px;
+      padding: 12px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
@@ -258,21 +265,21 @@
       border-radius: 50%;
     }
     .mock-tag {
-      font-size: 9px;
+      font-size: 9.5px;
       font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 5px;
+      padding: 2px 7px;
+      border-radius: 6px;
     }
     .mock-center {
       text-align: center;
-      font-size: 22px;
+      font-size: 24px;
     }
     .mock-bottom {
       display: flex;
       flex-direction: column;
     }
     .mock-title {
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 600;
       color: #ECE7DE;
       white-space: nowrap;
@@ -280,7 +287,7 @@
       text-overflow: ellipsis;
     }
     .mock-sub {
-      font-size: 9.5px;
+      font-size: 10px;
       color: #8C8880;
       white-space: nowrap;
       overflow: hidden;
@@ -290,35 +297,35 @@
     /* Expandable Details */
     .card-details {
       display: none;
-      margin-top: 14px;
+      margin-top: 18px;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
-      padding-top: 12px;
+      padding-top: 16px;
     }
     .card.open .card-details {
       display: block;
     }
     .steps-label {
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.9px;
       text-transform: uppercase;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .steps-well {
       background: #1A1B1F;
-      border-radius: 14px;
-      padding: 10px 12px;
+      border-radius: 16px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      font-size: 12px;
+      gap: 9px;
+      font-size: 12.5px;
       color: #ECE7DE;
     }
     .step-line {
       display: flex;
       align-items: flex-start;
-      gap: 7px;
-      line-height: 16px;
+      gap: 9px;
+      line-height: 18px;
     }
     .step-bullet {
       font-weight: 700;
@@ -326,17 +333,17 @@
 
     /* Resource Action Bar (No Claim Button) */
     .resource-bar {
-      margin-top: 10px;
+      margin-top: 14px;
       background: #1A1B1F;
-      border-radius: 14px;
-      padding: 7px 10px;
+      border-radius: 16px;
+      padding: 9px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 10px;
     }
     .url-text {
-      font-size: 11.5px;
+      font-size: 12px;
       color: #ECE7DE;
       white-space: nowrap;
       overflow: hidden;
@@ -346,11 +353,11 @@
     }
     .action-icons {
       display: flex;
-      gap: 6px;
+      gap: 8px;
     }
     .icon-btn {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       background: #22242A;
       border-radius: 50%;
       display: flex;
@@ -365,14 +372,16 @@
     /* Footer Note */
     .footer-note {
       background: #1A1B1F;
-      border-radius: 16px;
-      padding: 12px 14px;
+      border-radius: 18px;
+      padding: 16px 18px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 12px;
+      gap: 12px;
+      font-size: 12.5px;
       color: #8C8880;
-      margin-top: 10px;
+      margin-top: 16px;
+      margin-bottom: 30px;
+      line-height: 18px;
     }
   </style>
 </head>

@@ -2,6 +2,7 @@
 
 # local Claude Code settings
 .claude/
+.vscode/
 
 # personal CAPTCHA model learning project; never published
 L2_IITD_Captcha/

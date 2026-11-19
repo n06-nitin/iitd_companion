@@ -7,10 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.webkit.JavascriptInterface
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -35,10 +32,11 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,24 +47,57 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 
 internal val PerkAccent = Color(0xFFF2C14E)
 
 private const val REMOTE_PERKS_URL =
     "https://raw.githubusercontent.com/n06-nitin/iitd_companion/main/docs/perks.html"
-private const val LOCAL_PERKS_URL = "file:///android_asset/perks.html"
 
 /**
  * IITD Perks Screen: loaded from the 3-dot (⋮) menu over the tabs.
- * Dynamically fetches docs/perks.html from the GitHub repository with instant local asset fallback.
- * Allows instant, zero-APK updates by editing docs/perks.html and pushing to git.
+ * Fetches docs/perks.html directly via HTTP and renders with explicit "text/html" MIME type,
+ * with instant fallback to local bundled assets.
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun PerkScreen(onClose: () -> Unit) {
     val ctx = LocalContext.current
-    var progress by remember { mutableIntStateOf(0) }
+    val scope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(false) }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
+
+    // Read bundled local asset for instant 0ms initial display
+    val localHtml = remember {
+        runCatching {
+            ctx.assets.open("perks.html").bufferedReader().use { it.readText() }
+        }.getOrNull() ?: ""
+    }
+
+    // Function to fetch the latest remote HTML and render as "text/html"
+    fun fetchRemotePerks() {
+        scope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) { isLoading = true }
+            val remoteText = runCatching {
+                val url = URL("$REMOTE_PERKS_URL?t=${System.currentTimeMillis()}")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.connectTimeout = 6000
+                conn.readTimeout = 6000
+                conn.inputStream.bufferedReader().use { it.readText() }
+            }.getOrNull()
+
+            withContext(Dispatchers.Main) {
+                isLoading = false
+                if (!remoteText.isNullOrBlank() && remoteText.contains("<html", ignoreCase = true)) {
+                    webViewRef?.loadDataWithBaseURL("https://github.com", remoteText, "text/html", "UTF-8", null)
+                }
+            }
+        }
+    }
 
     BackHandler {
         val wv = webViewRef
@@ -78,6 +109,11 @@ fun PerkScreen(onClose: () -> Unit) {
             webViewRef?.destroy()
             webViewRef = null
         }
+    }
+
+    // Auto-fetch fresh version in background when opened
+    LaunchedEffect(Unit) {
+        fetchRemotePerks()
     }
 
     Column(
@@ -98,15 +134,14 @@ fun PerkScreen(onClose: () -> Unit) {
             ) {
                 StatusPill("IITD Perks · Student Hub", PerkAccent, Modifier.weight(1f))
                 ClayIconButton(Icons.Rounded.Refresh, "Reload") {
-                    webViewRef?.loadUrl("$REMOTE_PERKS_URL?t=${System.currentTimeMillis()}")
+                    fetchRemotePerks()
                 }
                 ClayIconButton(Icons.Rounded.Close, "Close", onClose)
             }
 
-            // Progress bar
-            if (progress in 1..99) {
+            // Loading indicator
+            if (isLoading) {
                 LinearProgressIndicator(
-                    progress = { progress / 100f },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
@@ -138,11 +173,10 @@ fun PerkScreen(onClose: () -> Unit) {
                         settings.apply {
                             javaScriptEnabled = true
                             domStorageEnabled = true
-                            cacheMode = WebSettings.LOAD_DEFAULT
-                            builtInZoomControls = false
-                            displayZoomControls = false
                             useWideViewPort = true
                             loadWithOverviewMode = true
+                            builtInZoomControls = false
+                            displayZoomControls = false
                         }
 
                         // JavaScript interface for native clipboard copy & external browser launch
@@ -162,12 +196,6 @@ fun PerkScreen(onClose: () -> Unit) {
                             }
                         }, "AndroidApp")
 
-                        webChromeClient = object : WebChromeClient() {
-                            override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                                progress = newProgress
-                            }
-                        }
-
                         webViewClient = object : WebViewClient() {
                             override fun shouldOverrideUrlLoading(
                                 view: WebView?,
@@ -175,29 +203,21 @@ fun PerkScreen(onClose: () -> Unit) {
                             ): Boolean {
                                 val uri = request?.url ?: return false
                                 val url = uri.toString()
-                                // If link is to perks.html or assets, let webview load it
-                                if (url.contains("perks.html")) return false
-                                // External link: open in user's browser app
-                                runCatching {
-                                    c.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                // If external link, open in user's default browser app
+                                if (url.startsWith("http") && !url.contains("perks.html")) {
+                                    runCatching {
+                                        c.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                    }
+                                    return true
                                 }
-                                return true
-                            }
-
-                            override fun onReceivedError(
-                                view: WebView?,
-                                request: WebResourceRequest?,
-                                error: WebResourceError?
-                            ) {
-                                // If remote URL fails to load (offline), fallback to local bundled asset
-                                if (request?.isForMainFrame == true && request.url.toString().startsWith("http")) {
-                                    view?.loadUrl(LOCAL_PERKS_URL)
-                                }
+                                return false
                             }
                         }
 
-                        // Load remote URL (fresh cache-bust param), falls back to local on failure
-                        loadUrl("$REMOTE_PERKS_URL?t=${System.currentTimeMillis()}")
+                        // Render bundled local HTML immediately as "text/html"
+                        if (localHtml.isNotBlank()) {
+                            loadDataWithBaseURL("https://github.com", localHtml, "text/html", "UTF-8", null)
+                        }
                         webViewRef = this
                     }
                 }
