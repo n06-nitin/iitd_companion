@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -59,6 +60,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CardGiftcard
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Refresh
@@ -261,6 +263,7 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
     // a portal opened from the ⋮ menu, shown over the tabs
     var more by remember { mutableStateOf<Portal?>(null) }
     var vpnOpen by remember { mutableStateOf(false) }
+    var perksOpen by remember { mutableStateOf(false) }
     var editTabsOpen by remember { mutableStateOf(false) }
 
     val keyboardUp = WindowInsets.isImeVisible
@@ -274,6 +277,7 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
                 onForget = onForget,
                 onOpen = { more = it },
                 onOpenVpn = { vpnOpen = true },
+                onOpenPerks = { perksOpen = true },
                 modifier = Modifier.swipeTabs(swiper),
             )
 
@@ -377,6 +381,14 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
             )
         }
 
+        AnimatedVisibility(
+            visible = perksOpen,
+            enter = fadeIn(tween(250)) + slideInVertically(tween(300)) { it / 12 },
+            exit = fadeOut(tween(200))
+        ) {
+            PerkScreen(onClose = { perksOpen = false })
+        }
+
         AnimatedContent(
             targetState = more,
             transitionSpec = {
@@ -472,6 +484,7 @@ private fun TopBar(
     onForget: () -> Unit,
     onOpen: (Portal) -> Unit,
     onOpenVpn: () -> Unit,
+    onOpenPerks: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val ctx = LocalContext.current
@@ -513,6 +526,11 @@ private fun TopBar(
                         text = { Text("IITD VPN") },
                         leadingIcon = { Icon(Icons.Rounded.VpnKey, contentDescription = null, tint = VpnAccent) },
                         onClick = { menuOpen = false; onOpenVpn() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("IITD Perks") },
+                        leadingIcon = { Icon(Icons.Rounded.CardGiftcard, contentDescription = null, tint = PerkAccent) },
+                        onClick = { menuOpen = false; onOpenPerks() }
                     )
                 }
             }
