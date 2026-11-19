@@ -83,8 +83,23 @@ fun PerkScreen(onClose: () -> Unit) {
         scope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { isLoading = true }
             val remoteText = runCatching {
-                val url = URL("$REMOTE_PERKS_URL?t=${System.currentTimeMillis()}")
-                val conn = url.openConnection() as HttpURLConnection
+                // Query GitHub commit SHA to completely bypass Fastly's 5-minute CDN edge cache
+                val sha = runCatching {
+                    val apiConn = URL("https://api.github.com/repos/n06-nitin/iitd_companion/commits/main").openConnection() as HttpURLConnection
+                    apiConn.connectTimeout = 4000
+                    apiConn.readTimeout = 4000
+                    apiConn.setRequestProperty("User-Agent", "IITDCompanion")
+                    val json = apiConn.inputStream.bufferedReader().use { it.readText() }
+                    Regex("\"sha\"\\s*:\\s*\"([a-f0-9]{40})\"").find(json)?.groupValues?.get(1)
+                }.getOrNull()
+
+                val targetUrl = if (!sha.isNullOrBlank()) {
+                    "https://raw.githubusercontent.com/n06-nitin/iitd_companion/$sha/docs/perks.html"
+                } else {
+                    "$REMOTE_PERKS_URL?t=${System.currentTimeMillis()}"
+                }
+
+                val conn = URL(targetUrl).openConnection() as HttpURLConnection
                 conn.useCaches = false
                 conn.connectTimeout = 8000
                 conn.readTimeout = 8000
