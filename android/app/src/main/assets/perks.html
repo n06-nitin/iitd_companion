@@ -43,25 +43,10 @@
       justify-content: center;
       flex-shrink: 0;
     }
-    .intro-body {
-      flex: 1;
-      min-width: 0;
-    }
     .intro-text {
       font-size: 12.5px;
       color: #ECE7DE;
       line-height: 17px;
-    }
-    .intro-sub {
-      font-size: 11.5px;
-      color: #8C8880;
-      margin-top: 4px;
-    }
-    .intro-mail {
-      color: #F2C14E;
-      font-weight: 600;
-      text-decoration: underline;
-      text-underline-offset: 2px;
     }
 
     /* Promotional / Sponsor Banner (Easy to customize or toggle) */
@@ -129,11 +114,6 @@
       background: #F2C14E;
       color: #141518;
       border-color: #F2C14E;
-    }
-    .chip.chip-suggest {
-      background: rgba(242, 193, 78, 0.12);
-      color: #F2C14E;
-      border: 1px dashed rgba(242, 193, 78, 0.45);
     }
 
     /* Category Section Wrapper (Keeps sections distinctly separated) */
@@ -457,13 +437,8 @@
         <path d="M12 2L14.4 7.6L20 8.4L16 12.3L17 18L12 15.2L7 18L8 12.3L4 8.4L9.6 7.6L12 2Z"/>
       </svg>
     </div>
-    <div class="intro-body">
-      <div class="intro-text">
-        So many perks offered to IITD students are lost simply because most never hear about them.
-      </div>
-      <div class="intro-sub">
-        Know more perks? Let us know at <a href="mailto:support@xlonlabs.com?subject=IITD%20Perk%20Suggestion" class="intro-mail">support@xlonlabs.com</a>
-      </div>
+    <div class="intro-text">
+      So many perks offered to IITD students are lost simply because most never hear about them.
     </div>
   </div>
 
@@ -485,7 +460,6 @@
     <button class="chip" onclick="filterCategory('academic', this)">Academic</button>
     <button class="chip" onclick="filterCategory('design', this)">Creative</button>
     <button class="chip" onclick="filterCategory('lifestyle', this)">Lifestyle</button>
-    <a href="mailto:support@xlonlabs.com?subject=IITD%20Perk%20Suggestion" class="chip chip-suggest">✨ Suggest Perk</a>
   </div>
 
   <!-- ==================== DEVELOPER & CLOUD ==================== -->

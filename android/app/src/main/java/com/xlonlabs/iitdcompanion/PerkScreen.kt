@@ -79,7 +79,7 @@ fun PerkScreen(onClose: () -> Unit) {
     }
 
     // Function to fetch the latest remote HTML and render as "text/html"
-    fun fetchRemotePerks(showFeedback: Boolean = false) {
+    fun fetchRemotePerks() {
         scope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { isLoading = true }
             val remoteText = runCatching {
@@ -113,11 +113,6 @@ fun PerkScreen(onClose: () -> Unit) {
                 isLoading = false
                 if (!remoteText.isNullOrBlank() && remoteText.contains("<html", ignoreCase = true)) {
                     webViewRef?.loadDataWithBaseURL("https://github.com", remoteText, "text/html", "UTF-8", null)
-                    if (showFeedback) {
-                        Toast.makeText(ctx, "Perks updated from GitHub", Toast.LENGTH_SHORT).show()
-                    }
-                } else if (showFeedback) {
-                    Toast.makeText(ctx, "Using offline perks", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -158,7 +153,7 @@ fun PerkScreen(onClose: () -> Unit) {
             ) {
                 StatusPill("IITD Perks · Student Hub", PerkAccent, Modifier.weight(1f))
                 ClayIconButton(Icons.Rounded.Refresh, "Reload") {
-                    fetchRemotePerks(showFeedback = true)
+                    fetchRemotePerks()
                 }
                 ClayIconButton(Icons.Rounded.Close, "Close", onClose)
             }
