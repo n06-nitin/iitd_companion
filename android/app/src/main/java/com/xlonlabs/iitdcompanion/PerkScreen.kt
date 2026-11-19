@@ -79,14 +79,18 @@ fun PerkScreen(onClose: () -> Unit) {
     }
 
     // Function to fetch the latest remote HTML and render as "text/html"
-    fun fetchRemotePerks() {
+    fun fetchRemotePerks(showFeedback: Boolean = false) {
         scope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { isLoading = true }
             val remoteText = runCatching {
                 val url = URL("$REMOTE_PERKS_URL?t=${System.currentTimeMillis()}")
                 val conn = url.openConnection() as HttpURLConnection
-                conn.connectTimeout = 6000
-                conn.readTimeout = 6000
+                conn.useCaches = false
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) IITDCompanion")
+                conn.setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+                conn.setRequestProperty("Pragma", "no-cache")
                 conn.inputStream.bufferedReader().use { it.readText() }
             }.getOrNull()
 
@@ -94,6 +98,11 @@ fun PerkScreen(onClose: () -> Unit) {
                 isLoading = false
                 if (!remoteText.isNullOrBlank() && remoteText.contains("<html", ignoreCase = true)) {
                     webViewRef?.loadDataWithBaseURL("https://github.com", remoteText, "text/html", "UTF-8", null)
+                    if (showFeedback) {
+                        Toast.makeText(ctx, "Perks updated from GitHub", Toast.LENGTH_SHORT).show()
+                    }
+                } else if (showFeedback) {
+                    Toast.makeText(ctx, "Using offline perks", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -134,7 +143,7 @@ fun PerkScreen(onClose: () -> Unit) {
             ) {
                 StatusPill("IITD Perks · Student Hub", PerkAccent, Modifier.weight(1f))
                 ClayIconButton(Icons.Rounded.Refresh, "Reload") {
-                    fetchRemotePerks()
+                    fetchRemotePerks(showFeedback = true)
                 }
                 ClayIconButton(Icons.Rounded.Close, "Close", onClose)
             }
