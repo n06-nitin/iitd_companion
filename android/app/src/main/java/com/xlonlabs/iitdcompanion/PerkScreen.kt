@@ -203,8 +203,8 @@ fun PerkScreen(onClose: () -> Unit) {
                             ): Boolean {
                                 val uri = request?.url ?: return false
                                 val url = uri.toString()
-                                // If external link, open in user's default browser app
-                                if (url.startsWith("http") && !url.contains("perks.html")) {
+                                // If mailto or external link, launch outside WebView
+                                if (url.startsWith("mailto:") || (url.startsWith("http") && !url.contains("perks.html"))) {
                                     runCatching {
                                         c.startActivity(Intent(Intent.ACTION_VIEW, uri))
                                     }

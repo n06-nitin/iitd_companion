@@ -372,16 +372,45 @@
     /* Footer Note */
     .footer-note {
       background: #1A1B1F;
-      border-radius: 18px;
-      padding: 16px 18px;
+      border: 1px solid rgba(94, 91, 86, 0.25);
+      border-radius: 20px;
+      padding: 18px 20px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
+      margin-top: 14px;
+      margin-bottom: 40px;
+    }
+    .footer-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(242, 193, 78, 0.15);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .footer-content {
+      flex: 1;
+    }
+    .footer-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ECE7DE;
+      margin-bottom: 4px;
+    }
+    .footer-sub {
       font-size: 12.5px;
       color: #8C8880;
-      margin-top: 16px;
-      margin-bottom: 30px;
       line-height: 18px;
+    }
+    .footer-email {
+      color: #F2C14E;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
   </style>
 </head>
@@ -939,8 +968,13 @@
 
   <!-- Footer prompt -->
   <div class="footer-note">
-    <span>💡</span>
-    <span>Know another verified student perk? Let us know.</span>
+    <div class="footer-icon">💡</div>
+    <div class="footer-content">
+      <div class="footer-title">Know more verified student perks?</div>
+      <div class="footer-sub">
+        Let us know at <a href="mailto:support@xlonlabs.com?subject=IITD%20Perk%20Suggestion" class="footer-email">support@xlonlabs.com</a>
+      </div>
+    </div>
   </div>
 
   <script>
