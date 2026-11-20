@@ -25,9 +25,11 @@
 		68EE9D611070317B6073769C /* eacademics.html in Resources */ = {isa = PBXBuildFile; fileRef = 9DBBC18DDA6C8E47B867C6D1 /* eacademics.html */; };
 		6C65341ED63D062C49F98EA9 /* webmail.html in Resources */ = {isa = PBXBuildFile; fileRef = A9CB2759F73AD48DFA2952F9 /* webmail.html */; };
 		6FB56456300BF5E567889A16 /* moodle-guest.html in Resources */ = {isa = PBXBuildFile; fileRef = FB3E1B3478988F400962C2E6 /* moodle-guest.html */; };
+		76B9EB055B661C4CEB308D52 /* perks.html in Resources */ = {isa = PBXBuildFile; fileRef = E0A1389AFA1E134AB9135892 /* perks.html */; };
 		949AF732D200AF742CFA2101 /* globalsign_gcc_r46_ov_tls_ca_2025.cer in Resources */ = {isa = PBXBuildFile; fileRef = 70AC5A220BBCD68864A332BD /* globalsign_gcc_r46_ov_tls_ca_2025.cer */; };
 		94F61F26616642E91A21A157 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 89938A087CAF8C30456569DB /* Assets.xcassets */; };
 		9600671DF8305749326209CE /* TabSwiper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF74AF6107ED3C2ED353EA8 /* TabSwiper.swift */; };
+		AB309E6D4EF492F3A2EA1D71 /* PerkSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D6BCA729947373B842DA7 /* PerkSheet.swift */; };
 		AB8E5F934ACE7CA9C3A099C9 /* demo.css in Resources */ = {isa = PBXBuildFile; fileRef = AB7D08DB6A663E3B9F82C22E /* demo.css */; };
 		B71EB0384FF3BB2E68BD1D21 /* oauth-login.html in Resources */ = {isa = PBXBuildFile; fileRef = 0877F73BB99ED8D4CFC3E7DB /* oauth-login.html */; };
 		BEF689CD75A402BE582BA26B /* LoginScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 900D62E001ECBA8C590AE669 /* LoginScript.swift */; };
@@ -80,8 +82,10 @@
 		D40B27D52DD53FDDFCEAE9A6 /* PagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagesView.swift; sourceTree = "<group>"; };
 		D6D021F0B5D58EA18212414E /* classgrid.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = classgrid.html; sourceTree = "<group>"; };
 		DAF74AF6107ED3C2ED353EA8 /* TabSwiper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSwiper.swift; sourceTree = "<group>"; };
+		E0A1389AFA1E134AB9135892 /* perks.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = perks.html; sourceTree = "<group>"; };
 		F1EDA4DD580A98957519975D /* WebData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebData.swift; sourceTree = "<group>"; };
 		FB3E1B3478988F400962C2E6 /* moodle-guest.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "moodle-guest.html"; sourceTree = "<group>"; };
+		FC8D6BCA729947373B842DA7 /* PerkSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerkSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -104,6 +108,7 @@
 				8B5B3B2708F356CDF78AE1BD /* Info.plist */,
 				900D62E001ECBA8C590AE669 /* LoginScript.swift */,
 				D40B27D52DD53FDDFCEAE9A6 /* PagesView.swift */,
+				FC8D6BCA729947373B842DA7 /* PerkSheet.swift */,
 				B2ED2D2C0AB00CB29D1AEB9F /* PortalSession.swift */,
 				C891C516A33849D93E5DDF10 /* PrivacyInfo.xcprivacy */,
 				1DA3CC621F0460F6FF8D5B80 /* RollCallScript.swift */,
@@ -124,6 +129,7 @@
 				86584DE03699546D8BF34362 /* BricolageGrotesque.ttf */,
 				70AC5A220BBCD68864A332BD /* globalsign_gcc_r46_ov_tls_ca_2025.cer */,
 				CD89B6DBE3D1D6B843A79708 /* OFL-BricolageGrotesque.txt */,
+				E0A1389AFA1E134AB9135892 /* perks.html */,
 				6FC8768AE3A44A508D0744B8 /* Demo */,
 			);
 			path = Resources;
@@ -236,6 +242,7 @@
 				022CAF0373E1A3456E62F584 /* moodle-login.html in Resources */,
 				01A561940F4BDF9415AD7D40 /* moodle.html in Resources */,
 				B71EB0384FF3BB2E68BD1D21 /* oauth-login.html in Resources */,
+				76B9EB055B661C4CEB308D52 /* perks.html in Resources */,
 				D1849F502016F0D4A63F0BD8 /* rollcall-captcha.svg in Resources */,
 				EE0192092958CA09AE343E09 /* rollcall-landing.html in Resources */,
 				E25FB5C712D27B35A9E9B35F /* rollcall.html in Resources */,
@@ -257,6 +264,7 @@
 				2B5D09F42B421AF7C818B2AE /* IITDCompanionApp.swift in Sources */,
 				BEF689CD75A402BE582BA26B /* LoginScript.swift in Sources */,
 				FA2F0DFEEE31FF70CF6769D2 /* PagesView.swift in Sources */,
+				AB309E6D4EF492F3A2EA1D71 /* PerkSheet.swift in Sources */,
 				D551582C7A29E1B49865CD8F /* PortalSession.swift in Sources */,
 				F3580687D9BE993D1DDD0965 /* RollCallScript.swift in Sources */,
 				3E2A2B657AB63741D4440C30 /* SecureCreds.swift in Sources */,
@@ -305,7 +313,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -324,7 +332,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.5;
+				MARKETING_VERSION = 1.2.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -390,7 +398,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -403,7 +411,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.1.5;
+				MARKETING_VERSION = 1.2.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

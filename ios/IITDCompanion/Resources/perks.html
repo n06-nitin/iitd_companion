@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>IITD Perks</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: #141518;
+      color: #ECE7DE;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      padding: 14px 14px 60px 14px;
+      line-height: 1.4;
+      overflow-x: hidden;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    /* Intro Mission Card */
+    .intro-card {
+      background: #1A1B1F;
+      border: 1px solid rgba(94, 91, 86, 0.25);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .intro-icon {
+      width: 34px;
+      height: 34px;
+      background: #F2C14E;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .intro-text {
+      font-size: 12.5px;
+      color: #ECE7DE;
+      line-height: 17px;
+    }
+
+    /* Promotional / Sponsor Banner (Easy to customize or toggle) */
+    .promo-card {
+      background: linear-gradient(135deg, rgba(242, 193, 78, 0.12), rgba(34, 36, 42, 0.9));
+      border: 1px solid rgba(242, 193, 78, 0.35);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .promo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .promo-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      background: #F2C14E;
+      color: #141518;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .promo-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ECE7DE;
+    }
+    .promo-desc {
+      font-size: 12px;
+      color: #8C8880;
+    }
+
+    /* Category Filter Chips */
+    .category-chips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+      scrollbar-width: none;
+    }
+    .category-chips::-webkit-scrollbar { display: none; }
+    .chip {
+      background: #22242A;
+      color: #ECE7DE;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 7px 13px;
+      font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+    }
+    .chip.active {
+      background: #F2C14E;
+      color: #141518;
+      border-color: #F2C14E;
+    }
+
+    /* Category Section Wrapper (Keeps sections distinctly separated) */
+    .category-section {
+      margin-bottom: 28px;
+    }
+
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 2px 10px 2px;
+      border-bottom: 1px solid rgba(94, 91, 86, 0.22);
+      margin-bottom: 12px;
+      margin-top: 4px;
+    }
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ECE7DE;
+      letter-spacing: -0.2px;
+    }
+    .section-badge {
+      background: #1A1B1F;
+      border: 1px solid rgba(94, 91, 86, 0.3);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Perk Cards - Compact & Crisp */
+    .cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .card {
+      background: #22242A;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 12px 14px;
+      box-shadow: 0 2px 8px rgba(4, 4, 5, 0.35);
+      transition: background 0.15s ease;
+    }
+    .card.open {
+      background: #262830;
+      border-color: rgba(255, 255, 255, 0.14);
+      padding: 14px 14px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .perk-icon-wrap {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+    .card-meta {
+      flex: 1;
+      min-width: 0;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ECE7DE;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .badge-pill {
+      display: inline-block;
+      margin-top: 3px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+    .expand-btn {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8C8880;
+      font-size: 11px;
+      transition: transform 0.2s ease;
+    }
+    .card.open .expand-btn {
+      transform: rotate(180deg);
+      color: #F2C14E;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: #8C8880;
+      margin-top: 6px;
+      line-height: 16px;
+    }
+
+    /* Horizontal Image Carousel (Only visible when card is open!) */
+    .images-carousel {
+      display: none;
+      gap: 10px;
+      overflow-x: auto;
+      margin-top: 14px;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .card.open .images-carousel {
+      display: flex;
+    }
+    .images-carousel::-webkit-scrollbar { display: none; }
+    .image-mockup {
+      width: 190px;
+      height: 115px;
+      background: #1A1B1F;
+      border: 1px solid rgba(94, 91, 86, 0.25);
+      border-radius: 14px;
+      padding: 10px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .mock-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mock-dots {
+      display: flex;
+      gap: 4px;
+    }
+    .mock-dot {
+      width: 5px;
+      height: 5px;
+      background: rgba(94, 91, 86, 0.5);
+      border-radius: 50%;
+    }
+    .mock-tag {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 5px;
+    }
+    .mock-center {
+      text-align: center;
+      font-size: 22px;
+    }
+    .mock-bottom {
+      display: flex;
+      flex-direction: column;
+    }
+    .mock-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #ECE7DE;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mock-sub {
+      font-size: 9.5px;
+      color: #8C8880;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Expandable Details */
+    .card-details {
+      display: none;
+      margin-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 12px;
+    }
+    .card.open .card-details {
+      display: block;
+    }
+    .steps-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .steps-well {
+      background: #1A1B1F;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      color: #ECE7DE;
+    }
+    .step-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 17px;
+    }
+    .step-bullet {
+      font-weight: 700;
+    }
+
+    /* Resource Action Bar (No Claim Button) */
+    .resource-bar {
+      margin-top: 10px;
+      background: #1A1B1F;
+      border-radius: 12px;
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .url-text {
+      font-size: 11.5px;
+      color: #ECE7DE;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-decoration: none;
+      flex: 1;
+    }
+    .action-icons {
+      display: flex;
+      gap: 6px;
+    }
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      background: #22242A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      color: #ECE7DE;
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    /* Footer Note */
+    .footer-note {
+      background: #1A1B1F;
+      border: 1px solid rgba(94, 91, 86, 0.25);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      margin-bottom: 30px;
+    }
+    .footer-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(242, 193, 78, 0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .footer-content {
+      flex: 1;
+    }
+    .footer-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #ECE7DE;
+      margin-bottom: 2px;
+    }
+    .footer-sub {
+      font-size: 12px;
+      color: #8C8880;
+      line-height: 16px;
+    }
+    .footer-email {
+      color: #F2C14E;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mission Banner -->
+  <div class="intro-card">
+    <div class="intro-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#141518">
+        <path d="M12 2L14.4 7.6L20 8.4L16 12.3L17 18L12 15.2L7 18L8 12.3L4 8.4L9.6 7.6L12 2Z"/>
+      </svg>
+    </div>
+    <div class="intro-text">
+      So many perks offered to IITD students are lost simply because most never hear about them.
+    </div>
+  </div>
+
+  <!-- Optional Promotional Section (Edit or add anytime!) -->
+  <!--
+  <div class="promo-card">
+    <div class="promo-header">
+      <div class="promo-title">Featured Campus Offer</div>
+      <div class="promo-tag">Exclusive</div>
+    </div>
+    <div class="promo-desc">Add custom student deals, fest announcements, or startup links here.</div>
+  </div>
+  -->
+
+  <!-- Category Chips -->
+  <div class="category-chips">
+    <button class="chip active" onclick="filterCategory('all', this)">All</button>
+    <button class="chip" onclick="filterCategory('dev', this)">Developer</button>
+    <button class="chip" onclick="filterCategory('academic', this)">Academic</button>
+    <button class="chip" onclick="filterCategory('design', this)">Creative</button>
+    <button class="chip" onclick="filterCategory('lifestyle', this)">Lifestyle</button>
+  </div>
+
+  <!-- ==================== DEVELOPER & CLOUD ==================== -->
+  <div class="category-section" data-cat="dev">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-icon" style="background: #6FA6F2; color: #141518;">💻</div>
+        <div class="section-title">Developer & Cloud</div>
+      </div>
+      <div class="section-badge" style="color: #6FA6F2;">3</div>
+    </div>
+
+    <div class="cards-list">
+      <!-- GitHub Student Pack -->
+      <div class="card" id="card-github">
+        <div class="card-header" onclick="toggleCard('card-github')">
+          <div class="perk-icon-wrap" style="background: #6FA6F2; color: #141518;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9.4 16.6L4.8 12L9.4 7.4L8 6L2 12L8 18L9.4 16.6ZM14.6 16.6L19.2 12L14.6 7.4L16 6L22 12L16 18L14.6 16.6Z"/>
+            </svg>
+          </div>
+          <div class="card-meta">
+            <div class="card-title">GitHub Student Developer Pack</div>
+            <div class="badge-pill" style="background: rgba(111, 166, 242, 0.15); color: #6FA6F2; border: 1px solid rgba(111, 166, 242, 0.35);">
+              Free Pro + Copilot
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">GitHub Pro, Copilot, free domains & $200 cloud credits.</div>
+
+        <!-- 3-4 Horizontal Preview Images -->
+        <div class="images-carousel">
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(111,166,242,0.2); color: #6FA6F2;">STEP 1</div>
+            </div>
+            <div class="mock-center">📧</div>
+            <div class="mock-bottom"><div class="mock-title">Link Email</div><div class="mock-sub">Add @iitd.ac.in in Settings</div></div>
+          </div>
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(111,166,242,0.2); color: #6FA6F2;">STEP 2</div>
+            </div>
+            <div class="mock-center">🪪</div>
+            <div class="mock-bottom"><div class="mock-title">Upload ID</div><div class="mock-sub">Submit IITD Student ID</div></div>
+          </div>
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(111,166,242,0.2); color: #6FA6F2;">STATUS</div>
+            </div>
+            <div class="mock-center">✨</div>
+            <div class="mock-bottom"><div class="mock-title">Pro Activated</div><div class="mock-sub">Copilot & Pro badge ready</div></div>
+          </div>
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(111,166,242,0.2); color: #6FA6F2;">REWARDS</div>
+            </div>
+            <div class="mock-center">🎁</div>
+            <div class="mock-bottom"><div class="mock-title">Partner Perks</div><div class="mock-sub">DigitalOcean, Domains & JetBrains</div></div>
+          </div>
+        </div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #6FA6F2;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #6FA6F2;">•</span> Sign in with personal GitHub account.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #6FA6F2;">•</span> Add @iitd.ac.in under Settings > Emails.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #6FA6F2;">•</span> Apply at education.github.com/pack with Student ID.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://education.github.com/pack" class="url-text" target="_blank">education.github.com/pack</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://education.github.com/pack')">📋</button>
+              <a href="https://education.github.com/pack" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JetBrains Pack -->
+      <div class="card" id="card-jetbrains">
+        <div class="card-header" onclick="toggleCard('card-jetbrains')">
+          <div class="perk-icon-wrap" style="background: #F0913A; color: #141518;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 18H4V8H20V18Z"/>
+            </svg>
+          </div>
+          <div class="card-meta">
+            <div class="card-title">JetBrains All Products Pack</div>
+            <div class="badge-pill" style="background: rgba(240, 145, 58, 0.15); color: #F0913A; border: 1px solid rgba(240, 145, 58, 0.35);">
+              Full Pro IDE Suite
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">All JetBrains IDEs free (IntelliJ, PyCharm, CLion, WebStorm).</div>
+
+        <div class="images-carousel">
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(240,145,58,0.2); color: #F0913A;">STEP 1</div>
+            </div>
+            <div class="mock-center">🎓</div>
+            <div class="mock-bottom"><div class="mock-title">Apply as Student</div><div class="mock-sub">Select University email</div></div>
+          </div>
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(240,145,58,0.2); color: #F0913A;">STEP 2</div>
+            </div>
+            <div class="mock-center">📩</div>
+            <div class="mock-bottom"><div class="mock-title">Check Webmail</div><div class="mock-sub">Confirm link in inbox</div></div>
+          </div>
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(240,145,58,0.2); color: #F0913A;">STATUS</div>
+            </div>
+            <div class="mock-center">⚡</div>
+            <div class="mock-bottom"><div class="mock-title">All IDEs Free</div><div class="mock-sub">IntelliJ, CLion, PyCharm</div></div>
+          </div>
+        </div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #F0913A;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #F0913A;">•</span> Apply with your @iitd.ac.in email.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #F0913A;">•</span> Confirm verification link in IITD Webmail.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://www.jetbrains.com/community/education/#students" class="url-text" target="_blank">jetbrains.com/community/education</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://www.jetbrains.com/community/education/#students')">📋</button>
+              <a href="https://www.jetbrains.com/community/education/#students" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Azure for Students -->
+      <div class="card" id="card-azure">
+        <div class="card-header" onclick="toggleCard('card-azure')">
+          <div class="perk-icon-wrap" style="background: #56B8D6; color: #141518;">☁️</div>
+          <div class="card-meta">
+            <div class="card-title">Microsoft Azure for Students</div>
+            <div class="badge-pill" style="background: rgba(86, 184, 214, 0.15); color: #56B8D6; border: 1px solid rgba(86, 184, 214, 0.35);">
+              $100 Cloud Credit
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">$100 cloud credit & free VMs without a credit card.</div>
+
+        <div class="images-carousel">
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(86,184,214,0.2); color: #56B8D6;">STEP 1</div>
+            </div>
+            <div class="mock-center">🔑</div>
+            <div class="mock-bottom"><div class="mock-title">Sign in</div><div class="mock-sub">Log in with @iitd.ac.in</div></div>
+          </div>
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(86,184,214,0.2); color: #56B8D6;">STATUS</div>
+            </div>
+            <div class="mock-center">💳</div>
+            <div class="mock-bottom"><div class="mock-title">Instant $100</div><div class="mock-sub">No credit card required</div></div>
+          </div>
+        </div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #56B8D6;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #56B8D6;">•</span> Sign in with &lt;kerberos&gt;@iitd.ac.in.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #56B8D6;">•</span> Claim $100 credit without credit card.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://azure.microsoft.com/free/students/" class="url-text" target="_blank">azure.microsoft.com/free/students</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://azure.microsoft.com/free/students/')">📋</button>
+              <a href="https://azure.microsoft.com/free/students/" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ACADEMIC & RESEARCH ==================== -->
+  <div class="category-section" data-cat="academic">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-icon" style="background: #4FC1AE; color: #141518;">🎓</div>
+        <div class="section-title">Academic & Research</div>
+      </div>
+      <div class="section-badge" style="color: #4FC1AE;">4</div>
+    </div>
+
+    <div class="cards-list">
+      <!-- Office 365 -->
+      <div class="card" id="card-office">
+        <div class="card-header" onclick="toggleCard('card-office')">
+          <div class="perk-icon-wrap" style="background: #4FC1AE; color: #141518;">📁</div>
+          <div class="card-meta">
+            <div class="card-title">Microsoft 365 & 1 TB OneDrive</div>
+            <div class="badge-pill" style="background: rgba(79, 193, 174, 0.15); color: #4FC1AE; border: 1px solid rgba(79, 193, 174, 0.35);">
+              1 TB Cloud + Office
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">Full Office desktop apps & 1 TB cloud storage.</div>
+
+        <div class="images-carousel">
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(79,193,174,0.2); color: #4FC1AE;">STEP 1</div>
+            </div>
+            <div class="mock-center">🌐</div>
+            <div class="mock-bottom"><div class="mock-title">Office Portal</div><div class="mock-sub">Visit portal.office.com</div></div>
+          </div>
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(79,193,174,0.2); color: #4FC1AE;">STEP 2</div>
+            </div>
+            <div class="mock-center">🔐</div>
+            <div class="mock-bottom"><div class="mock-title">IITD SSO</div><div class="mock-sub">Single sign-on login</div></div>
+          </div>
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(79,193,174,0.2); color: #4FC1AE;">STATUS</div>
+            </div>
+            <div class="mock-center">☁️</div>
+            <div class="mock-bottom"><div class="mock-title">1 TB Cloud</div><div class="mock-sub">1,000 GB OneDrive ready</div></div>
+          </div>
+        </div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #4FC1AE;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #4FC1AE;">•</span> Sign in at portal.office.com via IITD SSO.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #4FC1AE;">•</span> Download apps or use online with 1 TB OneDrive.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://portal.office.com" class="url-text" target="_blank">portal.office.com</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://portal.office.com')">📋</button>
+              <a href="https://portal.office.com" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overleaf -->
+      <div class="card" id="card-overleaf">
+        <div class="card-header" onclick="toggleCard('card-overleaf')">
+          <div class="perk-icon-wrap" style="background: #7CCB6E; color: #141518;">📄</div>
+          <div class="card-meta">
+            <div class="card-title">Overleaf Professional</div>
+            <div class="badge-pill" style="background: rgba(124, 203, 110, 0.15); color: #7CCB6E; border: 1px solid rgba(124, 203, 110, 0.35);">
+              Pro Collaborative LaTeX
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">Collaborative LaTeX with unlimited co-authors & Git sync.</div>
+
+        <div class="images-carousel">
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(124,203,110,0.2); color: #7CCB6E;">STEP 1</div>
+            </div>
+            <div class="mock-center">🏛️</div>
+            <div class="mock-bottom"><div class="mock-title">Join Group</div><div class="mock-sub">Open overleaf.com/edu/iitd</div></div>
+          </div>
+          <div class="image-mockup">
+            <div class="mock-top">
+              <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+              <div class="mock-tag" style="background: rgba(124,203,110,0.2); color: #7CCB6E;">STATUS</div>
+            </div>
+            <div class="mock-center">🚀</div>
+            <div class="mock-bottom"><div class="mock-title">Pro Features</div><div class="mock-sub">Git sync & full history</div></div>
+          </div>
+        </div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #7CCB6E;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #7CCB6E;">•</span> Add @iitd.ac.in in Overleaf Account Settings.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #7CCB6E;">•</span> Join the IIT Delhi institutional group.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://www.overleaf.com/edu/iitd" class="url-text" target="_blank">overleaf.com/edu/iitd</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://www.overleaf.com/edu/iitd')">📋</button>
+              <a href="https://www.overleaf.com/edu/iitd" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MATLAB -->
+      <div class="card" id="card-matlab">
+        <div class="card-header" onclick="toggleCard('card-matlab')">
+          <div class="perk-icon-wrap" style="background: #E0675A; color: #141518;">📊</div>
+          <div class="card-meta">
+            <div class="card-title">MATLAB & Simulink Campus Suite</div>
+            <div class="badge-pill" style="background: rgba(224, 103, 90, 0.15); color: #E0675A; border: 1px solid rgba(224, 103, 90, 0.35);">
+              All Toolboxes Included
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">Full desktop suite & all toolboxes licensed by IITD.</div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #E0675A;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #E0675A;">•</span> Sign in at MathWorks IITD portal with @iitd.ac.in.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #E0675A;">•</span> Download desktop installer with campus license.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://www.mathworks.com/academia/tah-portal/indian-institute-of-technology-delhi-31454555.html" class="url-text" target="_blank">mathworks.com/academia/tah-portal/iitd</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://www.mathworks.com/academia/tah-portal/indian-institute-of-technology-delhi-31454555.html')">📋</button>
+              <a href="https://www.mathworks.com/academia/tah-portal/indian-institute-of-technology-delhi-31454555.html" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notion -->
+      <div class="card" id="card-notion">
+        <div class="card-header" onclick="toggleCard('card-notion')">
+          <div class="perk-icon-wrap" style="background: #E8B84B; color: #141518;">📝</div>
+          <div class="card-meta">
+            <div class="card-title">Notion Plus + AI</div>
+            <div class="badge-pill" style="background: rgba(232, 184, 75, 0.15); color: #E8B84B; border: 1px solid rgba(232, 184, 75, 0.35);">
+              Unlimited Storage
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">Unlimited blocks, file uploads & team workspace.</div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #E8B84B;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #E8B84B;">•</span> Sign up with @iitd.ac.in.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #E8B84B;">•</span> Settings > Upgrade > Free Education plan.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://www.notion.so/product/notion-for-education" class="url-text" target="_blank">notion.so/product/education</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://www.notion.so/product/notion-for-education')">📋</button>
+              <a href="https://www.notion.so/product/notion-for-education" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CREATIVE & DESIGN ==================== -->
+  <div class="category-section" data-cat="design">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-icon" style="background: #E07BB5; color: #141518;">🎨</div>
+        <div class="section-title">Creative & Design</div>
+      </div>
+      <div class="section-badge" style="color: #E07BB5;">2</div>
+    </div>
+
+    <div class="cards-list">
+      <!-- Figma -->
+      <div class="card" id="card-figma">
+        <div class="card-header" onclick="toggleCard('card-figma')">
+          <div class="perk-icon-wrap" style="background: #E07BB5; color: #141518;">❖</div>
+          <div class="card-meta">
+            <div class="card-title">Figma for Education</div>
+            <div class="badge-pill" style="background: rgba(224, 123, 181, 0.15); color: #E07BB5; border: 1px solid rgba(224, 123, 181, 0.35);">
+              Pro Team Tier
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">Free Professional team tier & FigJam access.</div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #E07BB5;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #E07BB5;">•</span> Apply at figma.com/education as student.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #E07BB5;">•</span> Select IIT Delhi & verify @iitd.ac.in.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://www.figma.com/education/" class="url-text" target="_blank">figma.com/education</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://www.figma.com/education/')">📋</button>
+              <a href="https://www.figma.com/education/" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canva -->
+      <div class="card" id="card-canva">
+        <div class="card-header" onclick="toggleCard('card-canva')">
+          <div class="perk-icon-wrap" style="background: #4FC1AE; color: #141518;">🖌️</div>
+          <div class="card-meta">
+            <div class="card-title">Canva Pro for Education</div>
+            <div class="badge-pill" style="background: rgba(79, 193, 174, 0.15); color: #4FC1AE; border: 1px solid rgba(79, 193, 174, 0.35);">
+              100M+ Assets & Tools
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">Full Canva Pro design templates & AI tools free.</div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #4FC1AE;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #4FC1AE;">•</span> Sign in with @iitd.ac.in to unlock Pro.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://www.canva.com/education/" class="url-text" target="_blank">canva.com/education</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://www.canva.com/education/')">📋</button>
+              <a href="https://www.canva.com/education/" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LIFESTYLE & AUDIO ==================== -->
+  <div class="category-section" data-cat="lifestyle">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-icon" style="background: #7CCB6E; color: #141518;">🎧</div>
+        <div class="section-title">Lifestyle & Audio</div>
+      </div>
+      <div class="section-badge" style="color: #7CCB6E;">2</div>
+    </div>
+
+    <div class="cards-list">
+      <!-- Spotify -->
+      <div class="card" id="card-spotify">
+        <div class="card-header" onclick="toggleCard('card-spotify')">
+          <div class="perk-icon-wrap" style="background: #7CCB6E; color: #141518;">🎵</div>
+          <div class="card-meta">
+            <div class="card-title">Spotify Premium Student</div>
+            <div class="badge-pill" style="background: rgba(124, 203, 110, 0.15); color: #7CCB6E; border: 1px solid rgba(124, 203, 110, 0.35);">
+              50% Discount
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">Ad-free music at ₹59/mo (50% student discount).</div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #7CCB6E;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #7CCB6E;">•</span> Choose Student plan on Spotify.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #7CCB6E;">•</span> Verify IITD enrollment via SheerID.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://www.spotify.com/in-en/student/" class="url-text" target="_blank">spotify.com/student</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://www.spotify.com/in-en/student/')">📋</button>
+              <a href="https://www.spotify.com/in-en/student/" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apple Music -->
+      <div class="card" id="card-apple">
+        <div class="card-header" onclick="toggleCard('card-apple')">
+          <div class="perk-icon-wrap" style="background: #F2705E; color: #141518;">🍎</div>
+          <div class="card-meta">
+            <div class="card-title">Apple Music Student + Apple TV+</div>
+            <div class="badge-pill" style="background: rgba(242, 112, 94, 0.15); color: #F2705E; border: 1px solid rgba(242, 112, 94, 0.35);">
+              ₹59/mo + Apple TV+
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+        <div class="card-desc">Lossless audio at ₹59/mo + free Apple TV+ bundled.</div>
+
+        <div class="card-details">
+          <div class="steps-label" style="color: #F2705E;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #F2705E;">•</span> Select Student plan in Apple Music.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #F2705E;">•</span> Verify via UNiDAYS with @iitd.ac.in.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://www.apple.com/in/apple-music/" class="url-text" target="_blank">apple.com/in/apple-music</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://www.apple.com/in/apple-music/')">📋</button>
+              <a href="https://www.apple.com/in/apple-music/" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer prompt -->
+  <div class="footer-note">
+    <div class="footer-icon">💡</div>
+    <div class="footer-content">
+      <div class="footer-title">Know more verified student perks?</div>
+      <div class="footer-sub">
+        Let us know at <a href="mailto:support@xlonlabs.com?subject=IITD%20Perk%20Suggestion" class="footer-email">support@xlonlabs.com</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleCard(cardId) {
+      const card = document.getElementById(cardId);
+      if (card) card.classList.toggle('open');
+    }
+
+    function filterCategory(cat, el) {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+
+      document.querySelectorAll('.category-section').forEach(sec => {
+        if (cat === 'all' || sec.getAttribute('data-cat') === cat) {
+          sec.style.display = 'block';
+        } else {
+          sec.style.display = 'none';
+        }
+      });
+    }
+
+    function copyLink(url) {
+      if (window.AndroidApp && window.AndroidApp.copyText) {
+        window.AndroidApp.copyText(url);
+        return;
+      }
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Link copied to clipboard');
+      }).catch(() => {
+        prompt('Copy link:', url);
+      });
+    }
+  </script>
+</body>
+</html>

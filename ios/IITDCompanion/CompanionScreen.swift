@@ -67,6 +67,7 @@ struct CompanionScreen: View {
     @State private var more: Portal?
     @State private var vpnOpen = false
     @State private var editTabsOpen = false
+    @State private var perksOpen = false
 
     init(creds: Creds, onEditCreds: @escaping () -> Void, onForget: @escaping () -> Void) {
         self.onEditCreds = onEditCreds
@@ -85,6 +86,7 @@ struct CompanionScreen: View {
                        onEditTabs: { withAnimation(tween(0.3)) { editTabsOpen = true } },
                        onForget: onForget,
                        onOpen: { p in withAnimation(tween(0.3)) { more = p } },
+                       onOpenPerks: { withAnimation(tween(0.3)) { perksOpen = true } },
                        onOpenVpn: { withAnimation(tween(0.3)) { vpnOpen = true } })
                     .swipeTabs(swiper)
 
@@ -126,6 +128,12 @@ struct CompanionScreen: View {
 
             if let p = more {
                 MoreSheet(portal: p, creds: model.creds, onClose: { withAnimation(tween(0.2)) { more = nil } })
+                    .transition(.opacity.combined(with: .offset(y: 40)))
+                    .zIndex(2)
+            }
+
+            if perksOpen {
+                PerkSheet(onClose: { withAnimation(tween(0.2)) { perksOpen = false } })
                     .transition(.opacity.combined(with: .offset(y: 40)))
                     .zIndex(2)
             }
@@ -188,6 +196,7 @@ private struct TopBar: View {
     let onEditTabs: () -> Void
     let onForget: () -> Void
     let onOpen: (Portal) -> Void
+    let onOpenPerks: () -> Void
     let onOpenVpn: () -> Void
 
     var body: some View {
@@ -199,6 +208,11 @@ private struct TopBar: View {
                 Menu {
                     Button("Open in browser") {
                         openExternally(Demo.real(session.webView?.url ?? session.portal.home))
+                    }
+                    Button {
+                        onOpenPerks()
+                    } label: {
+                        Label("IITD Perks", systemImage: "gift")
                     }
                     Button("Edit tabs", action: onEditTabs)
                     Button("Edit saved login", action: onEditCreds)
@@ -275,7 +289,7 @@ private struct MoreSheet: View {
 }
 
 /// Material 3's determinate linear indicator: rounded bar plus the stop dot at the end.
-private struct LoadBar: View {
+struct LoadBar: View {
     let fraction: CGFloat
     let color: Tone
     var body: some View {
