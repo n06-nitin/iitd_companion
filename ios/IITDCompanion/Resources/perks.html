@@ -22,32 +22,7 @@
       margin: 0 auto;
     }
 
-    /* Intro Mission Card */
-    .intro-card {
-      background: #1A1B1F;
-      border: 1px solid rgba(94, 91, 86, 0.25);
-      border-radius: 16px;
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .intro-icon {
-      width: 34px;
-      height: 34px;
-      background: #F2C14E;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .intro-text {
-      font-size: 12.5px;
-      color: #ECE7DE;
-      line-height: 17px;
-    }
+
 
     /* Promotional / Sponsor Banner (Easy to customize or toggle) */
     .promo-card {
@@ -85,36 +60,7 @@
       color: #8C8880;
     }
 
-    /* Category Filter Chips */
-    .category-chips {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      margin-bottom: 20px;
-      scrollbar-width: none;
-    }
-    .category-chips::-webkit-scrollbar { display: none; }
-    .chip {
-      background: #22242A;
-      color: #ECE7DE;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 7px 13px;
-      font-size: 11.5px;
-      font-weight: 600;
-      white-space: nowrap;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      text-decoration: none;
-    }
-    .chip.active {
-      background: #F2C14E;
-      color: #141518;
-      border-color: #F2C14E;
-    }
+
 
     /* Category Section Wrapper (Keeps sections distinctly separated) */
     .category-section {
@@ -232,8 +178,8 @@
     }
     .card-desc {
       font-size: 12px;
-      color: #8C8880;
-      margin-top: 6px;
+      color: #ECE7DE;
+      margin-bottom: 10px;
       line-height: 16px;
     }
 
@@ -430,37 +376,7 @@
 </head>
 <body>
 
-  <!-- Mission Banner -->
-  <div class="intro-card">
-    <div class="intro-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="#141518">
-        <path d="M12 2L14.4 7.6L20 8.4L16 12.3L17 18L12 15.2L7 18L8 12.3L4 8.4L9.6 7.6L12 2Z"/>
-      </svg>
-    </div>
-    <div class="intro-text">
-      So many perks offered to IITD students are lost simply because most never hear about them.
-    </div>
-  </div>
 
-  <!-- Optional Promotional Section (Edit or add anytime!) -->
-  <!--
-  <div class="promo-card">
-    <div class="promo-header">
-      <div class="promo-title">Featured Campus Offer</div>
-      <div class="promo-tag">Exclusive</div>
-    </div>
-    <div class="promo-desc">Add custom student deals, fest announcements, or startup links here.</div>
-  </div>
-  -->
-
-  <!-- Category Chips -->
-  <div class="category-chips">
-    <button class="chip active" onclick="filterCategory('all', this)">All</button>
-    <button class="chip" onclick="filterCategory('dev', this)">Developer</button>
-    <button class="chip" onclick="filterCategory('academic', this)">Academic</button>
-    <button class="chip" onclick="filterCategory('design', this)">Creative</button>
-    <button class="chip" onclick="filterCategory('lifestyle', this)">Lifestyle</button>
-  </div>
 
   <!-- ==================== DEVELOPER & CLOUD ==================== -->
   <div class="category-section" data-cat="dev">
@@ -476,9 +392,9 @@
       <!-- GitHub Student Pack -->
       <div class="card" id="card-github">
         <div class="card-header" onclick="toggleCard('card-github')">
-          <div class="perk-icon-wrap" style="background: #6FA6F2; color: #141518;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9.4 16.6L4.8 12L9.4 7.4L8 6L2 12L8 18L9.4 16.6ZM14.6 16.6L19.2 12L14.6 7.4L16 6L22 12L16 18L14.6 16.6Z"/>
+          <div class="perk-icon-wrap" style="background: #24292F; border: 1px solid rgba(255, 255, 255, 0.12);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#FFFFFF">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
             </svg>
           </div>
           <div class="card-meta">
@@ -489,7 +405,6 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">GitHub Pro, Copilot, free domains & $200 cloud credits.</div>
 
         <!-- 3-4 Horizontal Preview Images -->
         <div class="images-carousel">
@@ -528,6 +443,7 @@
         </div>
 
         <div class="card-details">
+          <div class="card-desc">GitHub Pro, Copilot, free domains & $200 cloud credits.</div>
           <div class="steps-label" style="color: #6FA6F2;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #6FA6F2;">•</span> Sign in with personal GitHub account.</div>
@@ -547,9 +463,11 @@
       <!-- JetBrains Pack -->
       <div class="card" id="card-jetbrains">
         <div class="card-header" onclick="toggleCard('card-jetbrains')">
-          <div class="perk-icon-wrap" style="background: #F0913A; color: #141518;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 18H4V8H20V18Z"/>
+          <div class="perk-icon-wrap" style="background: #000000; border: 1px solid rgba(255, 255, 255, 0.12);">
+            <svg width="22" height="22" viewBox="0 0 24 24">
+              <path fill="#000000" d="M0 0h24v24H0z"/>
+              <path fill="#FFFFFF" d="M3.5 3.5h7.5v2.5H3.5zm0 4.5h7.5v2.5H3.5zm0 9.5h17v2.5H3.5z"/>
+              <path fill="#FC801D" d="M11 3.5h9.5V6H11z"/>
             </svg>
           </div>
           <div class="card-meta">
@@ -560,7 +478,6 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">All JetBrains IDEs free (IntelliJ, PyCharm, CLion, WebStorm).</div>
 
         <div class="images-carousel">
           <div class="image-mockup">
@@ -590,6 +507,7 @@
         </div>
 
         <div class="card-details">
+          <div class="card-desc">All JetBrains IDEs free (IntelliJ, PyCharm, CLion, WebStorm).</div>
           <div class="steps-label" style="color: #F0913A;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #F0913A;">•</span> Apply with your @iitd.ac.in email.</div>
@@ -608,7 +526,12 @@
       <!-- Azure for Students -->
       <div class="card" id="card-azure">
         <div class="card-header" onclick="toggleCard('card-azure')">
-          <div class="perk-icon-wrap" style="background: #56B8D6; color: #141518;">☁️</div>
+          <div class="perk-icon-wrap" style="background: #001B3A; border: 1px solid rgba(0, 120, 212, 0.35);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M5.483 21.3H.242L8.27 3.758h4.632z" fill="#0078D4"/>
+              <path d="M13.8 3.758l-5.69 11.238 4.793 4.887a1.69 1.69 0 0 0 1.28.52h6.816z" fill="#5EA0EF"/>
+            </svg>
+          </div>
           <div class="card-meta">
             <div class="card-title">Microsoft Azure for Students</div>
             <div class="badge-pill" style="background: rgba(86, 184, 214, 0.15); color: #56B8D6; border: 1px solid rgba(86, 184, 214, 0.35);">
@@ -617,7 +540,6 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">$100 cloud credit & free VMs without a credit card.</div>
 
         <div class="images-carousel">
           <div class="image-mockup">
@@ -639,6 +561,7 @@
         </div>
 
         <div class="card-details">
+          <div class="card-desc">$100 cloud credit & free VMs without a credit card.</div>
           <div class="steps-label" style="color: #56B8D6;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #56B8D6;">•</span> Sign in with &lt;kerberos&gt;@iitd.ac.in.</div>
@@ -670,7 +593,14 @@
       <!-- Office 365 -->
       <div class="card" id="card-office">
         <div class="card-header" onclick="toggleCard('card-office')">
-          <div class="perk-icon-wrap" style="background: #4FC1AE; color: #141518;">📁</div>
+          <div class="perk-icon-wrap" style="background: #181A20; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <svg width="22" height="22" viewBox="0 0 24 24">
+              <rect x="2" y="2" width="9" height="9" fill="#F25022"/>
+              <rect x="13" y="2" width="9" height="9" fill="#7FBA00"/>
+              <rect x="2" y="13" width="9" height="9" fill="#00A4EF"/>
+              <rect x="13" y="13" width="9" height="9" fill="#FFB900"/>
+            </svg>
+          </div>
           <div class="card-meta">
             <div class="card-title">Microsoft 365 & 1 TB OneDrive</div>
             <div class="badge-pill" style="background: rgba(79, 193, 174, 0.15); color: #4FC1AE; border: 1px solid rgba(79, 193, 174, 0.35);">
@@ -679,7 +609,6 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">Full Office desktop apps & 1 TB cloud storage.</div>
 
         <div class="images-carousel">
           <div class="image-mockup">
@@ -709,6 +638,7 @@
         </div>
 
         <div class="card-details">
+          <div class="card-desc">Full Office desktop apps & 1 TB cloud storage.</div>
           <div class="steps-label" style="color: #4FC1AE;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #4FC1AE;">•</span> Sign in at portal.office.com via IITD SSO.</div>
@@ -727,7 +657,11 @@
       <!-- Overleaf -->
       <div class="card" id="card-overleaf">
         <div class="card-header" onclick="toggleCard('card-overleaf')">
-          <div class="perk-icon-wrap" style="background: #7CCB6E; color: #141518;">📄</div>
+          <div class="perk-icon-wrap" style="background: #0D2413; border: 1px solid rgba(76, 175, 80, 0.3);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#4CAF50">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5a4.5 4.5 0 0 1-4.5-4.5c0-2.5 4.5-6.5 4.5-6.5s4.5 4 4.5 6.5a4.5 4.5 0 0 1-4.5 4.5z"/>
+            </svg>
+          </div>
           <div class="card-meta">
             <div class="card-title">Overleaf Professional</div>
             <div class="badge-pill" style="background: rgba(124, 203, 110, 0.15); color: #7CCB6E; border: 1px solid rgba(124, 203, 110, 0.35);">
@@ -736,7 +670,6 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">Collaborative LaTeX with unlimited co-authors & Git sync.</div>
 
         <div class="images-carousel">
           <div class="image-mockup">
@@ -758,6 +691,7 @@
         </div>
 
         <div class="card-details">
+          <div class="card-desc">Collaborative LaTeX with unlimited co-authors & Git sync.</div>
           <div class="steps-label" style="color: #7CCB6E;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #7CCB6E;">•</span> Add @iitd.ac.in in Overleaf Account Settings.</div>
@@ -776,7 +710,11 @@
       <!-- MATLAB -->
       <div class="card" id="card-matlab">
         <div class="card-header" onclick="toggleCard('card-matlab')">
-          <div class="perk-icon-wrap" style="background: #E0675A; color: #141518;">📊</div>
+          <div class="perk-icon-wrap" style="background: #2B1107; border: 1px solid rgba(237, 92, 43, 0.3);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#ED5C2B">
+              <path d="M12 2L2 19h20L12 2zm0 4.5L18.5 17H5.5L12 6.5z"/>
+            </svg>
+          </div>
           <div class="card-meta">
             <div class="card-title">MATLAB & Simulink Campus Suite</div>
             <div class="badge-pill" style="background: rgba(224, 103, 90, 0.15); color: #E0675A; border: 1px solid rgba(224, 103, 90, 0.35);">
@@ -785,9 +723,9 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">Full desktop suite & all toolboxes licensed by IITD.</div>
 
         <div class="card-details">
+          <div class="card-desc">Full desktop suite & all toolboxes licensed by IITD.</div>
           <div class="steps-label" style="color: #E0675A;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #E0675A;">•</span> Sign in at MathWorks IITD portal with @iitd.ac.in.</div>
@@ -806,7 +744,11 @@
       <!-- Notion -->
       <div class="card" id="card-notion">
         <div class="card-header" onclick="toggleCard('card-notion')">
-          <div class="perk-icon-wrap" style="background: #E8B84B; color: #141518;">📝</div>
+          <div class="perk-icon-wrap" style="background: #FFFFFF; border: 1px solid rgba(255, 255, 255, 0.2);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#000000">
+              <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l11.716-.7a.93.93 0 0 1 .746.28c.233.233.326.606.326.98v13.565c0 .793-.326 1.258-1.072 1.305l-12.742.746c-.84.047-1.259-.28-1.585-.793L2.36 17.027c-.42-.653-.606-1.212-.606-1.82V5.56c0-.84.42-1.305 1.166-1.399l1.54-.047v.094zm3.033 2.983c-.746 0-.84.28-.84.653v9.789c0 .466.233.653.793.653l1.398-.093V7.284l-1.351-.093zm8.95.14c0-.467-.28-.653-.746-.653l-6.2 8.769V7.47c0-.466-.28-.653-.746-.653l-1.306.094v11.14c0 .466.28.653.746.653l6.248-8.816v8.443c0 .466.28.653.746.653l1.258-.093V7.332z"/>
+            </svg>
+          </div>
           <div class="card-meta">
             <div class="card-title">Notion Plus Education Plan</div>
             <div class="badge-pill" style="background: rgba(232, 184, 75, 0.15); color: #E8B84B; border: 1px solid rgba(232, 184, 75, 0.35);">
@@ -815,9 +757,9 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">Unlimited blocks, page history & 5 GB file uploads free.</div>
 
         <div class="card-details">
+          <div class="card-desc">Unlimited blocks, page history & 5 GB file uploads free.</div>
           <div class="steps-label" style="color: #E8B84B;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #E8B84B;">•</span> Sign up with @iitd.ac.in.</div>
@@ -842,14 +784,22 @@
         <div class="section-icon" style="background: #E07BB5; color: #141518;">🎨</div>
         <div class="section-title">Creative & Design</div>
       </div>
-      <div class="section-badge" style="color: #E07BB5;">2</div>
+      <div class="section-badge" style="color: #E07BB5;">3</div>
     </div>
 
     <div class="cards-list">
       <!-- Figma -->
       <div class="card" id="card-figma">
         <div class="card-header" onclick="toggleCard('card-figma')">
-          <div class="perk-icon-wrap" style="background: #E07BB5; color: #141518;">❖</div>
+          <div class="perk-icon-wrap" style="background: #1E1E1E; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <svg width="22" height="22" viewBox="0 0 24 24">
+              <path d="M8 24c2.2 0 4-1.8 4-4v-4H8c-2.2 0-4 1.8-4 4s1.8 4 4 4z" fill="#0ACF83"/>
+              <path d="M4 12c0-2.2 1.8-4 4-4h4v8H8c-2.2 0-4-1.8-4-4z" fill="#A259FF"/>
+              <path d="M4 4c0-2.2 1.8-4 4-4h4v8H8C5.8 8 4 6.2 4 4z" fill="#F24E1E"/>
+              <path d="M12 0h4c2.2 0 4 1.8 4 4s-1.8 4-4 4h-4V0z" fill="#FF7262"/>
+              <path d="M20 12c0 2.2-1.8 4-4 4h-4V8h4c2.2 0 4 1.8 4 4z" fill="#1ABCFE"/>
+            </svg>
+          </div>
           <div class="card-meta">
             <div class="card-title">Figma for Education</div>
             <div class="badge-pill" style="background: rgba(224, 123, 181, 0.15); color: #E07BB5; border: 1px solid rgba(224, 123, 181, 0.35);">
@@ -858,9 +808,9 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">Free Professional team tier & FigJam access.</div>
 
         <div class="card-details">
+          <div class="card-desc">Free Professional team tier & FigJam access.</div>
           <div class="steps-label" style="color: #E07BB5;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #E07BB5;">•</span> Apply at figma.com/education as student.</div>
@@ -876,10 +826,49 @@
         </div>
       </div>
 
+      <!-- Adobe Creative Cloud -->
+      <div class="card" id="card-adobe">
+        <div class="card-header" onclick="toggleCard('card-adobe')">
+          <div class="perk-icon-wrap" style="background: #250A0A; border: 1px solid rgba(250, 15, 0, 0.3);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#FA0F00">
+              <path d="M13.966 22h3.036l-4.043-9.722h-1.916L7.001 22h3.047l1.042-2.732h1.834L13.966 22zM12.44 14.652l.536 1.43h-1.074l.538-1.43zM15.116 2H24v20h-4.385L15.116 2zM8.884 2H0v20h4.384L8.884 2z"/>
+            </svg>
+          </div>
+          <div class="card-meta">
+            <div class="card-title">Adobe Creative Cloud</div>
+            <div class="badge-pill" style="background: rgba(250, 15, 0, 0.15); color: #FA0F00; border: 1px solid rgba(250, 15, 0, 0.35);">
+              Full Pro Suite
+            </div>
+          </div>
+          <div class="expand-btn">▼</div>
+        </div>
+
+        <div class="card-details">
+          <div class="card-desc">Photoshop, Illustrator, Premiere Pro, InDesign & 20+ apps free via IITD subscription.</div>
+          <div class="steps-label" style="color: #FA0F00;">Verification Steps</div>
+          <div class="steps-well">
+            <div class="step-line"><span class="step-bullet" style="color: #FA0F00;">•</span> Go to account.adobe.com.</div>
+            <div class="step-line"><span class="step-bullet" style="color: #FA0F00;">•</span> Sign in using your IIT Delhi email ID (user@department.iitd.ac.in).</div>
+            <div class="step-line"><span class="step-bullet" style="color: #FA0F00;">•</span> Complete OTP verification and set your password if prompted.</div>
+          </div>
+          <div class="resource-bar">
+            <a href="https://account.adobe.com" class="url-text" target="_blank">account.adobe.com</a>
+            <div class="action-icons">
+              <button class="icon-btn" onclick="copyLink('https://account.adobe.com')">📋</button>
+              <a href="https://account.adobe.com" class="icon-btn" target="_blank">↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Autodesk Education -->
       <div class="card" id="card-autodesk">
         <div class="card-header" onclick="toggleCard('card-autodesk')">
-          <div class="perk-icon-wrap" style="background: #0696D7; color: #141518;">📐</div>
+          <div class="perk-icon-wrap" style="background: #041926; border: 1px solid rgba(6, 150, 215, 0.35);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#0696D7">
+              <path d="M12.5 0L1 21.5h4.8l2.6-4.9h8.3l1.5 4.9H23L12.5 0zm-.2 5.5l3.2 8.3H8.9l3.4-8.3z"/>
+            </svg>
+          </div>
           <div class="card-meta">
             <div class="card-title">Autodesk Education Suite</div>
             <div class="badge-pill" style="background: rgba(6, 150, 215, 0.15); color: #0696D7; border: 1px solid rgba(6, 150, 215, 0.35);">
@@ -888,9 +877,9 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">Full free 1-yr renewable educational access for students.</div>
 
         <div class="card-details">
+          <div class="card-desc">Full free 1-yr renewable educational access for students.</div>
           <div class="steps-label" style="color: #0696D7;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #0696D7;">•</span> Create account at autodesk.com/education with @iitd.ac.in.</div>
@@ -923,7 +912,12 @@
       <!-- Spotify -->
       <div class="card" id="card-spotify">
         <div class="card-header" onclick="toggleCard('card-spotify')">
-          <div class="perk-icon-wrap" style="background: #7CCB6E; color: #141518;">🎵</div>
+          <div class="perk-icon-wrap" style="background: #121212; border: 1px solid rgba(30, 215, 96, 0.25);">
+            <svg width="22" height="22" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="12" fill="#1ED760"/>
+              <path d="M17.5 16.4c-.2.3-.6.4-.9.2-2.5-1.5-5.6-1.8-9.3-1-.4.1-.7-.2-.8-.5-.1-.4.2-.7.5-.8 4-1 7.5-.6 10.3 1.1.3.2.4.6.2.9zm1.3-2.9c-.3.4-.7.5-1.1.3-2.8-1.7-7.2-2.3-10.5-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.2 8.6-.6 11.8 1.4.4.2.5.6.3 1zm.1-3C15.3 8.3 9.6 8.1 6.3 9.1c-.5.2-1.1-.1-1.2-.6-.2-.5.1-1.1.6-1.2 3.8-1.1 10.1-.9 14.1 1.5.5.3.6.9.3 1.4-.3.5-.9.6-1.4.3z" fill="#000000"/>
+            </svg>
+          </div>
           <div class="card-meta">
             <div class="card-title">Spotify Premium Student</div>
             <div class="badge-pill" style="background: rgba(124, 203, 110, 0.15); color: #7CCB6E; border: 1px solid rgba(124, 203, 110, 0.35);">
@@ -932,9 +926,9 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">Ad-free music at ₹69/mo (verified student discount).</div>
 
         <div class="card-details">
+          <div class="card-desc">Ad-free music at ₹69/mo (verified student discount).</div>
           <div class="steps-label" style="color: #7CCB6E;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #7CCB6E;">•</span> Choose Student plan on Spotify.</div>
@@ -953,7 +947,11 @@
       <!-- Apple Music -->
       <div class="card" id="card-apple">
         <div class="card-header" onclick="toggleCard('card-apple')">
-          <div class="perk-icon-wrap" style="background: #F2705E; color: #141518;">🍎</div>
+          <div class="perk-icon-wrap" style="background: #251216; border: 1px solid rgba(250, 35, 59, 0.3);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#FA233B">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.07 1.71-.93 2.73 1 .08 2.02-.48 2.64-1.23z"/>
+            </svg>
+          </div>
           <div class="card-meta">
             <div class="card-title">Apple Music Student + Apple TV+</div>
             <div class="badge-pill" style="background: rgba(242, 112, 94, 0.15); color: #F2705E; border: 1px solid rgba(242, 112, 94, 0.35);">
@@ -962,9 +960,9 @@
           </div>
           <div class="expand-btn">▼</div>
         </div>
-        <div class="card-desc">Lossless audio at ₹69/mo + free Apple TV+ bundled.</div>
 
         <div class="card-details">
+          <div class="card-desc">Lossless audio at ₹69/mo + free Apple TV+ bundled.</div>
           <div class="steps-label" style="color: #F2705E;">Verification Steps</div>
           <div class="steps-well">
             <div class="step-line"><span class="step-bullet" style="color: #F2705E;">•</span> Select Student plan in Apple Music.</div>
@@ -999,18 +997,7 @@
       if (card) card.classList.toggle('open');
     }
 
-    function filterCategory(cat, el) {
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
 
-      document.querySelectorAll('.category-section').forEach(sec => {
-        if (cat === 'all' || sec.getAttribute('data-cat') === cat) {
-          sec.style.display = 'block';
-        } else {
-          sec.style.display = 'none';
-        }
-      });
-    }
 
     function copyLink(url) {
       if (window.AndroidApp && window.AndroidApp.copyText) {
