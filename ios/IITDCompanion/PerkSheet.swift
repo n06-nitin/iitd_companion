@@ -1,74 +1,52 @@
+import Observation
 import SwiftUI
 import WebKit
 
-/// IITD Perks Sheet: loaded from the 3-dot (⋮) menu over the tabs.
-/// Dynamically fetches verified student perks from Cloudflare Worker,
-/// falling back to GitHub and local bundled perks.html asset.
-struct PerkSheet: View {
-    let kerberos: String
-    let onClose: () -> Void
-    @StateObject private var coordinator: PerkWebCoordinator
+let PerkAccent = Caution
 
-    init(kerberos: String = "", onClose: @escaping () -> Void) {
-        self.kerberos = kerberos
-        self.onClose = onClose
-        _coordinator = StateObject(wrappedValue: PerkWebCoordinator(kerberos: kerberos))
-    }
+let workerPerksURL = "https://iitd-companion-worker.hellonitinbro.workers.dev/api/perks"
+private let remotePerksURL = "https://raw.githubusercontent.com/n06-nitin/iitd_companion/main/docs/perks.html"
 
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                StatusPill(label: "IITD Perks · Student Hub", dot: Caution)
-                ClayIconButton(icon: "icon_refresh", description: "Reload") {
-                    coordinator.fetchRemote()
-                }
-                ClayIconButton(icon: "icon_close", description: "Close", action: onClose)
+private let carouselTouchJS = """
+if (!window.__icPerkTouch) {
+    window.__icPerkTouch = true;
+    document.addEventListener('touchstart', function(e) {
+        var el = e.target;
+        var busy = false;
+        while (el && el !== document.body) {
+            if (el.classList && (el.classList.contains('milestones-carousel') || el.classList.contains('images-carousel'))) {
+                busy = true;
+                break;
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-
-            // Thin loading bar
-            Group {
-                if coordinator.isLoading {
-                    LoadBar(fraction: 0.7, color: Caution)
-                } else {
-                    Color.clear
-                }
+            if (el.scrollWidth > el.clientWidth + 2) {
+                var cs = getComputedStyle(el).overflowX;
+                if (cs === 'auto' || cs === 'scroll') { busy = true; break; }
             }
-            .frame(height: 2)
-            .padding(.horizontal, 24)
-            Spacer().frame(height: 6)
-
-            PerkWebView(coordinator: coordinator)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .circular))
-                .padding(.horizontal, 10)
-                .padding(.bottom, 10)
+            el = el.parentElement;
         }
-        .background(ClayBackground().ignoresSafeArea())
-    }
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.touchBusy) {
+            window.webkit.messageHandlers.touchBusy.postMessage(busy);
+        }
+    }, { passive: true, capture: true });
 }
+"""
 
-private struct PerkWebView: UIViewRepresentable {
-    @ObservedObject var coordinator: PerkWebCoordinator
-
-    func makeUIView(context: Context) -> WKWebView {
-        coordinator.createWebView()
-    }
-
-    func updateUIView(_ uiView: WKWebView, context: Context) {}
-}
-
-@MainActor
-final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate, WKScriptMessageHandler {
-    @Published var isLoading = false
-    private var webView: WKWebView?
+/// Holds the embedded IITD Perks WKWebView and remote refresh state.
+@Observable @MainActor
+final class PerkWebCoordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+    private(set) var isLoading = false
+    @ObservationIgnored var touchBusy = false
+    @ObservationIgnored private(set) var webView: WKWebView?
+    @ObservationIgnored private var loadedOnce = false
     let kerberos: String
-    private let workerURL = "https://iitd-companion-worker.hellonitinbro.workers.dev/api/perks"
-    private let remoteURL = "https://raw.githubusercontent.com/n06-nitin/iitd_companion/main/docs/perks.html"
 
     init(kerberos: String = "") {
         self.kerberos = kerberos
         super.init()
+    }
+
+    func touchStarted() {
+        touchBusy = false
     }
 
     func createWebView() -> WKWebView {
@@ -78,26 +56,36 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
         let contentController = WKUserContentController()
         contentController.add(self, name: "copyText")
         contentController.add(self, name: "openBrowser")
+        contentController.add(self, name: "touchBusy")
 
-        // Bridge for AndroidApp.copyText and AndroidApp.openBrowser compatibility
+        // Bridge for AndroidApp.copyText and AndroidApp.openExternal/openBrowser compatibility
         let bridgeJS = """
         window.AndroidApp = {
             copyText: function(text) {
                 window.webkit.messageHandlers.copyText.postMessage(text);
+            },
+            openExternal: function(url) {
+                window.webkit.messageHandlers.openBrowser.postMessage(url);
             },
             openBrowser: function(url) {
                 window.webkit.messageHandlers.openBrowser.postMessage(url);
             }
         };
         """
-        let userScript = WKUserScript(source: bridgeJS, injectionTime: .atDocumentStart, forMainFrameOnly: false)
-        contentController.addUserScript(userScript)
+        contentController.addUserScript(WKUserScript(source: bridgeJS, injectionTime: .atDocumentStart, forMainFrameOnly: false))
         config.userContentController = contentController
 
         let wv = WKWebView(frame: .zero, configuration: config)
         wv.backgroundColor = UIColor(Ink.color)
         wv.isOpaque = false
         wv.scrollView.backgroundColor = UIColor(Ink.color)
+        if #available(iOS 26.0, *) {
+            // no Liquid Glass blur/fade where the page meets the card's edges: the page shows as-is
+            let sv = wv.scrollView
+            for edge in [sv.topEdgeEffect, sv.bottomEdgeEffect, sv.leftEdgeEffect, sv.rightEdgeEffect] {
+                edge.isHidden = true
+            }
+        }
         wv.navigationDelegate = self
         self.webView = wv
 
@@ -107,10 +95,14 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
             wv.loadHTMLString(localHtml, baseURL: Bundle.main.bundleURL)
         }
 
-        // Fetch fresh copy from Worker / GitHub in background
-        fetchRemote()
-
+        ensureLoaded()
         return wv
+    }
+
+    func ensureLoaded() {
+        guard !loadedOnce else { return }
+        loadedOnce = true
+        fetchRemote()
     }
 
     func fetchRemote() {
@@ -122,13 +114,13 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
 
             // 1. Primary: Query Cloudflare Worker with user kerberos
             let userParam = self.kerberos.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            let workerURLString = "\(self.workerURL)?user=\(userParam)&t=\(Int(Date().timeIntervalSince1970 * 1000))"
+            let workerURLString = "\(workerPerksURL)?user=\(userParam)&t=\(Int(Date().timeIntervalSince1970 * 1000))"
 
             if let fetchURL = URL(string: workerURLString) {
                 var req = URLRequest(url: fetchURL)
                 req.timeoutInterval = 6
                 req.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-                req.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+                req.setValue("no-cache, no-store, must-revalidate", forHTTPHeaderField: "Cache-Control")
                 req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) IITDCompanion-iOS", forHTTPHeaderField: "User-Agent")
 
                 if let (htmlData, resp) = try? await URLSession.shared.data(for: req),
@@ -141,7 +133,7 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
             }
 
             // 2. Fallback: Query latest commit SHA to completely bypass edge CDN cache
-            var targetURLString = self.remoteURL
+            var targetURLString = remotePerksURL
             if let apiURL = URL(string: "https://api.github.com/repos/n06-nitin/iitd_companion/commits/main") {
                 var req = URLRequest(url: apiURL)
                 req.timeoutInterval = 4
@@ -168,6 +160,20 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
                 wv.loadHTMLString(html, baseURL: Bundle.main.bundleURL)
             }
         }
+    }
+
+    func scrollToTop() {
+        webView?.evaluateJavaScript("window.scrollTo({top: 0, behavior: 'smooth'})", completionHandler: nil)
+    }
+
+    func destroy() {
+        webView?.configuration.userContentController.removeAllScriptMessageHandlers()
+        webView?.stopLoading()
+        webView = nil
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        webView.evaluateJavaScript(carouselTouchJS, completionHandler: nil)
     }
 
     // Intercept external links and mailto
@@ -200,8 +206,11 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "copyText", let text = message.body as? String {
             UIPasteboard.general.string = text
+            Toaster.shared.show("Link copied to clipboard")
         } else if message.name == "openBrowser", let urlString = message.body as? String, let url = URL(string: urlString) {
             UIApplication.shared.open(url)
+        } else if message.name == "touchBusy", let busy = message.body as? Bool {
+            touchBusy = busy
         }
     }
 }

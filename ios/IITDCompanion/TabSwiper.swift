@@ -4,30 +4,38 @@ import UIKit.UIGestureRecognizerSubclass
 
 /// Interactive tab switching. `offset` is how far (pt) the current page has been
 /// dragged: negative moves it left to reveal the tab on the right. The page
-/// container reads `positionOf` on every change, so a drag never touches SwiftUI.
+/// container reads `positionOf` / `perksPosition` on every change, so a drag never touches SwiftUI.
 ///
-/// The tabs form a ring, like the faces of the cube: past the last tab comes the
-/// first again. A new drag can catch a turn that's still settling and carry on
-/// from there, so quick repeated swipes chain round the ring.
+/// The 4 dock portals form a cyclic ring (Perks is excluded from the 4-part ring).
+/// When currently viewing Perks (`inPerks`), dragging right reveals the 4th dock portal
+/// on the left, and dragging left wraps to the 1st dock portal on the right.
 @Observable @MainActor
 final class TabSwiper {
     private(set) var tabs: [Portal]
 
     private(set) var current: Portal
-    /// The tab being revealed, if any.
+    /// The portal being revealed, if any.
     private(set) var target: Portal?
+    /// Whether the user is settled on the pinned Perks tab.
+    private(set) var inPerks = false
+    /// Whether Perks is currently sliding in as the target face.
+    private(set) var targetIsPerks = false
+
     private(set) var offset: CGFloat = 0
-    /// The tab that would be shown if the finger lifted now. Changes once per swipe, not per frame.
+    /// The portal that would be shown if the finger lifted now. Changes once per swipe, not per frame.
     private(set) var visual: Portal
+    /// True once the midpoint crosses into Perks (used for TopBar and dock labels).
+    private(set) var visualIsPerks = false
     @ObservationIgnored var width: CGFloat = 1
 
-    /// Signed steps round the ring from `current` to `target`: ±1 for a swipe, up to ±2 for a tap.
+    /// Signed steps round the ring from `current` to `target`: ±1 for a swipe, 0 for a Perks jump.
     private var step = 0
     @ObservationIgnored private var raw: CGFloat = 0 // finger travel
     @ObservationIgnored private var animation: FrameAnimation?
     @ObservationIgnored private var generation = 0
     /// Where the running animation will land, if it's turning to another tab.
     @ObservationIgnored private var landing: Portal?
+    @ObservationIgnored private var landingPerks = false
     /// Called after every change, so the cube can re-pose its faces.
     @ObservationIgnored var onChange: (() -> Void)?
 
@@ -46,24 +54,54 @@ final class TabSwiper {
         animation = nil
         generation += 1
         tabs = newTabs
-        settle(newTabs.contains(current) ? current : newTabs[0])
+        settle(newTabs.contains(current) ? current : newTabs[0], inPerks)
     }
 
     var progress: CGFloat { min(max(abs(offset) / width, 0), 1) }
 
+    /// True while Perks is on screen (settled, entering, or exiting).
+    var perksVisible: Bool { inPerks || targetIsPerks }
+
     /// -1..1 horizontal position of `p` as a cube face, or nil when off screen.
     func positionOf(_ p: Portal) -> CGFloat? {
         let f = min(max(offset / width, -1), 1)
+        if targetIsPerks { return p == current ? f : nil }
+        if inPerks { return p == target ? f + (f < 0 ? 1 : -1) : nil }
         if p == current { return f }
         if p == target { return f + (f < 0 ? 1 : -1) }
         return nil
     }
 
-    /// Fractional tab index for the sliding dock pill. It can run past either end
-    /// (-1..size) while wrapping round; the dock draws the overflow on the other side.
+    /// -1..1 horizontal position of the Perks cube face, or nil when off screen.
+    func perksPosition() -> CGFloat? {
+        let f = min(max(offset / width, -1), 1)
+        if inPerks { return f }
+        if targetIsPerks { return f + (f < 0 ? 1 : -1) }
+        return nil
+    }
+
+    /// Fractional tab index for the sliding dock pill.
+    /// In 4-portal mode, runs in -1..4; when Perks is involved, runs in -1..5 (4 = Perks).
     func indicator() -> CGFloat {
+        let count = CGFloat(tabs.count)
+        if targetIsPerks {
+            let from = CGFloat(tabs.firstIndex(of: current) ?? 0)
+            return from + (count - from) * progress
+        }
+        if inPerks {
+            guard let target else { return count }
+            if step != 0 { return count + progress * CGFloat(step) }
+            let to = CGFloat(tabs.firstIndex(of: target) ?? 0)
+            return count + (to - count) * progress
+        }
         let from = CGFloat(tabs.firstIndex(of: current) ?? 0)
         return target == nil ? from : from + progress * CGFloat(step)
+    }
+
+    func pillColor() -> Tone {
+        let from = inPerks ? PerkAccent : current.accent
+        let to = targetIsPerks ? PerkAccent : (target?.accent ?? from)
+        return Tone.lerp(from, to, Double(progress))
     }
 
     /// Stop a running turn where it is, keeping every face in place on screen.
@@ -73,14 +111,33 @@ final class TabSwiper {
         animation = nil
         generation += 1
         let to = landing
+        let toPerks = landingPerks
         landing = nil
-        if let to, to == target, offset != 0 {
-            // it was turning to `to`: make that the current face, re-expressing the offset from its side
-            let from = current
-            current = to
-            offset -= sign(offset) * width
-            target = from
-            step = -step
+        landingPerks = false
+        if offset != 0 {
+            if toPerks && targetIsPerks {
+                let from = current
+                inPerks = true
+                targetIsPerks = false
+                target = from
+                offset -= sign(offset) * width
+                step = -1
+            } else if let to, to == target {
+                if inPerks {
+                    inPerks = false
+                    targetIsPerks = true
+                    current = to
+                    offset -= sign(offset) * width
+                    target = nil
+                    step = 0
+                } else {
+                    let from = current
+                    current = to
+                    offset -= sign(offset) * width
+                    target = from
+                    step = -step
+                }
+            }
         }
         raw = offset
         changed()
@@ -91,12 +148,20 @@ final class TabSwiper {
         raw += dx
         if raw == 0 {
             target = nil
+            targetIsPerks = false
             offset = 0
             changed()
             return
         }
         step = raw < 0 ? 1 : -1
-        target = tabs[mod((tabs.firstIndex(of: current) ?? 0) + step, tabs.count)]
+        targetIsPerks = false
+        if inPerks {
+            // From Perks: finger right (step = -1) reveals 4th dock; finger left (step = +1) wraps to 1st dock
+            target = step < 0 ? tabs.last : tabs.first
+        } else {
+            // Strictly cycle the 4 customizable portals; Perks is excluded from the 4-part ring
+            target = tabs[mod((tabs.firstIndex(of: current) ?? 0) + step, tabs.count)]
+        }
         offset = min(max(raw, -width), width)
         changed()
     }
@@ -104,24 +169,49 @@ final class TabSwiper {
     func release(velocity: CGFloat) {
         if animation?.running == true { return }
         let t = target
+        let toPerks = targetIsPerks
         let fast = abs(velocity) > Self.flingVelocity
         let flung = fast && sign(velocity) == sign(offset)
         let flungBack = fast && sign(velocity) == -sign(offset)
-        let commit = t != nil && !flungBack && (abs(offset) > width * 0.22 || flung)
+        let commit = (t != nil || toPerks) && !flungBack && (abs(offset) > width * 0.22 || flung)
         let end = commit ? sign(offset) * width : 0
-        run(commit ? t : nil, SpringCurve(from: offset, to: end, velocity: velocity,
-                                          dampingRatio: commit ? 1 : 0.6, stiffness: 380))
+        run(commit ? t : nil, commit && toPerks,
+            SpringCurve(from: offset, to: end, velocity: velocity,
+                        dampingRatio: commit ? 1 : 0.6, stiffness: 380))
     }
 
-    /// Tapped a tab: turn the short way round the ring towards it.
+    /// Tapped a tab: turn the short way round the ring (or out of Perks) towards it.
     func goTo(_ p: Portal) {
         finishNow()
-        guard p != current, let to = tabs.firstIndex(of: p) else { return }
+        guard tabs.contains(p), let to = tabs.firstIndex(of: p) else { return }
+        if inPerks {
+            target = p
+            targetIsPerks = false
+            step = 0
+            run(p, false, TweenCurve(from: 0, to: width, duration: 0.42))
+            return
+        }
+        guard p != current else { return }
         let ahead = mod(to - (tabs.firstIndex(of: current) ?? 0), tabs.count)
         step = ahead <= tabs.count / 2 ? ahead : ahead - tabs.count
         target = p
+        targetIsPerks = false
         let end = step > 0 ? -width : width
-        run(p, TweenCurve(from: 0, to: end, duration: 0.42))
+        run(p, false, TweenCurve(from: 0, to: end, duration: 0.42))
+    }
+
+    /// Tapped the pinned Perks slot: cube-turn smoothly into Perks from the right.
+    func goToPerks() {
+        finishNow()
+        guard !inPerks else { return }
+        target = nil
+        targetIsPerks = true
+        step = 0
+        run(nil, true, TweenCurve(from: 0, to: -width, duration: 0.42))
+    }
+
+    func exitPerks() {
+        if inPerks { goTo(current) }
     }
 
     #if DEBUG
@@ -141,29 +231,37 @@ final class TabSwiper {
         animation?.cancel()
         animation = nil
         generation += 1
-        settle(landing)
+        settle(landing, landingPerks)
     }
 
-    private func run(_ to: Portal?, _ curve: AnimationCurve) {
+    private func run(_ to: Portal?, _ toPerks: BooleanFlag, _ curve: AnimationCurve) {
         generation += 1
         let gen = generation
         landing = to
+        landingPerks = toPerks
         animation = FrameAnimation(curve: curve, onFrame: { [weak self] v in
             guard let self, gen == self.generation else { return }
             self.offset = v
             self.changed()
         }, onEnd: { [weak self] in
             guard let self, gen == self.generation else { return }
-            self.settle(to)
+            self.settle(to, toPerks)
         })
     }
 
-    private func settle(_ to: Portal?) {
-        if let to { current = to }
+    private func settle(_ to: Portal?, _ toPerks: Bool) {
+        if toPerks {
+            inPerks = true
+        } else if let to {
+            inPerks = false
+            current = to
+        }
         offset = 0
         raw = 0
         target = nil
+        targetIsPerks = false
         landing = nil
+        landingPerks = false
         step = 0
         changed()
     }
@@ -171,9 +269,19 @@ final class TabSwiper {
     private func changed() {
         let v = target.flatMap { progress > 0.5 ? $0 : nil } ?? current
         if v != visual { visual = v }
+        let vp: Bool = if targetIsPerks {
+            progress > 0.5
+        } else if inPerks {
+            target == nil || progress <= 0.5
+        } else {
+            false
+        }
+        if vp != visualIsPerks { visualIsPerks = vp }
         onChange?()
     }
 }
+
+private typealias BooleanFlag = Bool
 
 private func sign(_ x: CGFloat) -> CGFloat { x > 0 ? 1 : (x < 0 ? -1 : 0) }
 private func mod(_ a: Int, _ n: Int) -> Int { ((a % n) + n) % n }

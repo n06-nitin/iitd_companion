@@ -1,17 +1,19 @@
 import AVFoundation
 import SwiftUI
 
-/// Every tab's session, the swiper, and which tabs have a live WebView.
+/// Every tab's session, the swiper, the Perks coordinator, and which tabs have a live WebView.
 @Observable @MainActor
 final class CompanionModel {
     @ObservationIgnored let creds: Creds
     @ObservationIgnored let sessions: [Portal: PortalSession]
+    @ObservationIgnored let perks: PerkWebCoordinator
     @ObservationIgnored let swiper: TabSwiper
     private(set) var dock: [Portal]
     /// Tabs with a live WebView. Only the open tab gets one at launch; once its page
     /// is up the rest warm up one at a time (sign-in-by-themselves portals first), so
     /// no WebView is ever built in the middle of a swipe.
     private(set) var opened: [Portal]
+    private(set) var perksLoaded = false
 
     var more: [Portal] { Portal.pickable.filter { !dock.contains($0) } }
 
@@ -20,6 +22,7 @@ final class CompanionModel {
         let initialDock = loadDock()
         dock = initialDock
         sessions = Dictionary(uniqueKeysWithValues: Portal.pickable.map { ($0, PortalSession(portal: $0, creds: creds)) })
+        perks = PerkWebCoordinator(kerberos: creds.kerberos)
         let last = UserDefaults.standard.string(forKey: "lastTab").flatMap(Portal.init(rawValue:)).flatMap { initialDock.contains($0) ? $0 : nil }
         let first = last ?? initialDock[0]
         swiper = TabSwiper(tabs: initialDock, initial: first)
@@ -29,6 +32,8 @@ final class CompanionModel {
     func session(_ p: Portal) -> PortalSession { sessions[p]! }
 
     func open(_ p: Portal) { if !opened.contains(p) { opened.append(p) } }
+
+    func markPerksLoaded() { if !perksLoaded { perksLoaded = true } }
 
     func updateDock(_ newDock: [Portal]) {
         for p in opened where !newDock.contains(p) {
@@ -51,15 +56,24 @@ final class CompanionModel {
             if Task.isCancelled { return }
             open(p)
         }
+        if !perksLoaded {
+            try? await Task.sleep(for: .milliseconds(700))
+            if Task.isCancelled { return }
+            perksLoaded = true
+        }
     }
 
-    func destroy() { sessions.values.forEach { $0.destroy() } }
+    func destroy() {
+        sessions.values.forEach { $0.destroy() }
+        perks.destroy()
+    }
 }
 
 struct CompanionScreen: View {
     let onEditCreds: () -> Void
     let onForget: () -> Void
 
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model: CompanionModel
     @State private var askedCamera = false
     @State private var keyboardUp = false
@@ -67,7 +81,12 @@ struct CompanionScreen: View {
     @State private var more: Portal?
     @State private var vpnOpen = false
     @State private var editTabsOpen = false
-    @State private var perksOpen = false
+
+    @State private var lastSeenDropKey: String? = UserDefaults.standard.string(forKey: "lastSeenDropKey")
+    @State private var cachedDropActive: Bool = UserDefaults.standard.bool(forKey: "lastDropActive")
+    @State private var cachedDropKey: String = UserDefaults.standard.string(forKey: "lastDropKey") ?? ""
+    @State private var cycleTick: String = current8AmIstCycleKey()
+    private var dropStore = DropStore.shared
 
     init(creds: Creds, onEditCreds: @escaping () -> Void, onForget: @escaping () -> Void) {
         self.onEditCreds = onEditCreds
@@ -75,31 +94,69 @@ struct CompanionScreen: View {
         _model = State(initialValue: CompanionModel(creds: creds))
     }
 
+    private var activeDrop: Bool { dropStore.status?.drop ?? cachedDropActive }
+    private var resolvedDropKey: String {
+        let raw = dropStore.status?.dropKey ?? cachedDropKey
+        if activeDrop && raw.hasSuffix(":daily") {
+            let prefix = String(raw.dropLast(":daily".count))
+            return "\(prefix):\(cycleTick)"
+        }
+        return raw
+    }
+    private var perksDotVisible: Bool {
+        activeDrop && !resolvedDropKey.isEmpty && lastSeenDropKey != resolvedDropKey
+    }
+
+    private func openPerks() {
+        let key = resolvedDropKey
+        if !key.isEmpty {
+            lastSeenDropKey = key
+            UserDefaults.standard.set(key, forKey: "lastSeenDropKey")
+        }
+        model.markPerksLoaded()
+        model.swiper.goToPerks()
+    }
+
     var body: some View {
         let swiper = model.swiper
         let tab = swiper.current
         let session = model.session(tab)
+        let perksBrowserURL = URL(string: "\(workerPerksURL)?user=\(model.creds.kerberos.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())")!
+
         ZStack {
             VStack(spacing: 0) {
-                TopBar(session: model.session(swiper.visual), morePortals: model.more,
+                TopBar(session: model.session(swiper.visual),
+                       perksSelected: swiper.visualIsPerks,
+                       perksLoading: model.perks.isLoading,
+                       perksBrowserURL: perksBrowserURL,
+                       morePortals: model.more,
                        onEditCreds: onEditCreds,
                        onEditTabs: { withAnimation(tween(0.3)) { editTabsOpen = true } },
                        onForget: onForget,
                        onOpen: { p in withAnimation(tween(0.3)) { more = p } },
-                       onOpenPerks: { withAnimation(tween(0.3)) { perksOpen = true } },
+                       onReloadPerks: { model.perks.fetchRemote() },
                        onOpenVpn: { withAnimation(tween(0.3)) { vpnOpen = true } })
                     .swipeTabs(swiper)
 
-                PagesView(model: model, opened: model.opened)
+                PagesView(model: model, opened: model.opened, perksLoaded: model.perksLoaded)
                     .clipShape(RoundedRectangle(cornerRadius: 24, style: .circular))
                     .padding(.horizontal, 10)
 
                 if !keyboardUp {
-                    if tab == .rollcall { RollCallBar(session: session) }
-                    TabBar(model: model) { p in
-                        // tapping the open tab again goes back to that portal's home page
-                        if p == swiper.current { model.session(p).home() } else { swiper.goTo(p) }
-                    }
+                    if !swiper.visualIsPerks && tab == .rollcall { RollCallBar(session: session) }
+                    TabBar(
+                        model: model,
+                        onSelect: { p in
+                            // tapping the open tab again goes back to that portal's home page
+                            if swiper.inPerks || p != swiper.current { swiper.goTo(p) }
+                            else { model.session(p).home() }
+                        },
+                        showPerksBadge: perksDotVisible,
+                        onOpenPerks: {
+                            if swiper.inPerks { model.perks.scrollToTop() }
+                            else { openPerks() }
+                        }
+                    )
                 }
             }
 
@@ -131,12 +188,6 @@ struct CompanionScreen: View {
                     .transition(.opacity.combined(with: .offset(y: 40)))
                     .zIndex(2)
             }
-
-            if perksOpen {
-                PerkSheet(kerberos: model.creds.kerberos, onClose: { withAnimation(tween(0.2)) { perksOpen = false } })
-                    .transition(.opacity.combined(with: .offset(y: 40)))
-                    .zIndex(2)
-            }
         }
         .task {
             WorkerTracker.checkin(kerberos: model.creds.kerberos)
@@ -150,8 +201,26 @@ struct CompanionScreen: View {
                 swiper.freeze(at: f)
                 return
             }
+            if UserDefaults.standard.bool(forKey: "ICDebugOpenPerks") {
+                try? await Task.sleep(for: .milliseconds(300))
+                openPerks()
+            }
             #endif
             await model.warmUp()
+        }
+        .onChange(of: dropStore.status) { _, newStatus in
+            if let newStatus {
+                cachedDropActive = newStatus.drop
+                cachedDropKey = newStatus.dropKey
+                UserDefaults.standard.set(newStatus.drop, forKey: "lastDropActive")
+                UserDefaults.standard.set(newStatus.dropKey, forKey: "lastDropKey")
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                cycleTick = current8AmIstCycleKey()
+                WorkerTracker.refreshDropStatus()
+            }
         }
         // the tab being swiped in needs a WebView too
         .onChange(of: swiper.target) { _, t in if let t { model.open(t) } }
@@ -192,23 +261,31 @@ struct CompanionScreen: View {
 
 private struct TopBar: View {
     let session: PortalSession
+    let perksSelected: Bool
+    let perksLoading: Bool
+    let perksBrowserURL: URL
     let morePortals: [Portal]
     let onEditCreds: () -> Void
     let onEditTabs: () -> Void
     let onForget: () -> Void
     let onOpen: (Portal) -> Void
-    let onOpenPerks: () -> Void
+    let onReloadPerks: () -> Void
     let onOpenVpn: () -> Void
 
     var body: some View {
-        let (label, dot) = statusOf(session)
+        let (label, dot) = perksSelected
+            ? (perksLoading ? "Loading IITD Perks…" : "IITD Perks · Student Hub", PerkAccent)
+            : statusOf(session)
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 StatusPill(label: label, dot: dot)
-                ClayIconButton(icon: "icon_refresh", description: "Reload") { session.reload() }
+                ClayIconButton(icon: "icon_refresh", description: "Reload") {
+                    if perksSelected { onReloadPerks() } else { session.reload() }
+                }
                 Menu {
                     Button("Open in browser") {
-                        openExternally(Demo.real(session.webView?.url ?? session.portal.home))
+                        let url = perksSelected ? perksBrowserURL : Demo.real(session.webView?.url ?? session.portal.home)
+                        openExternally(url)
                     }
                     Button("Edit tabs", action: onEditTabs)
                     Button("Edit saved login", action: onEditCreds)
@@ -219,11 +296,6 @@ private struct TopBar: View {
                             Button { onOpen(p) } label: { Label(p.label, image: p.icon) }
                         }
                         Button(action: onOpenVpn) { Label("IITD VPN", image: "icon_vpn_key") }
-                        Button {
-                            onOpenPerks()
-                        } label: {
-                            Label("IITD Perks", systemImage: "gift")
-                        }
                     }
                 } label: {
                     ClayIconFace {
@@ -234,7 +306,20 @@ private struct TopBar: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            PageProgress(session: session)
+            if perksSelected {
+                Group {
+                    if perksLoading {
+                        LoadBar(fraction: 0.7, color: PerkAccent)
+                    } else {
+                        Color.clear
+                    }
+                }
+                .frame(height: 2)
+                .padding(.horizontal, 24)
+                Spacer().frame(height: 6)
+            } else {
+                PageProgress(session: session)
+            }
         }
     }
 }
@@ -304,31 +389,64 @@ struct LoadBar: View {
     }
 }
 
-/// Floating clay dock. The raised pill slides with the finger, stretches
-/// mid-swipe and shifts from one portal's hue to the next.
+/// Floating clay dock with 4 cyclic portal slots on the left and a pinned
+/// non-removable Perks slot on the right. The raised pill slides across slots,
+/// stretches mid-swipe and shifts hue.
 private struct TabBar: View {
     let model: CompanionModel
     let onSelect: (Portal) -> Void
+    let showPerksBadge: Bool
+    let onOpenPerks: () -> Void
+
     private let dockHeight: CGFloat = 56
+    private let dividerWidth: CGFloat = 9
 
     var body: some View {
         let swiper = model.swiper
-        ZStack {
-            Pills(swiper: swiper, height: dockHeight)
-            HStack(spacing: 0) {
-                ForEach(model.dock) { p in
-                    TabItem(portal: p, session: model.session(p), active: p == swiper.visual)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        let perksVisual = swiper.visualIsPerks
+
+        GeometryReader { g in
+            let slotWidth = (g.size.width - dividerWidth) / CGFloat(model.dock.count + 1)
+            let portalAreaWidth = slotWidth * CGFloat(model.dock.count)
+
+            ZStack(alignment: .leading) {
+                Pills(
+                    swiper: swiper,
+                    slotWidth: slotWidth,
+                    dividerWidth: dividerWidth,
+                    portalAreaWidth: portalAreaWidth,
+                    totalWidth: g.size.width,
+                    height: dockHeight
+                )
+
+                HStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        ForEach(model.dock) { p in
+                            TabItem(portal: p, session: model.session(p), active: !perksVisual && p == swiper.visual)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .contentShape(Rectangle())
+                                .onTapGesture { onSelect(p) }
+                        }
+                    }
+                    .frame(width: portalAreaWidth, height: dockHeight)
+                    .contentShape(Rectangle())
+                    .swipeTabs(swiper)
+
+                    Rectangle()
+                        .fill(Faint.color.opacity(0.35))
+                        .frame(width: 1, height: 28)
+                        .padding(.horizontal, 4)
+
+                    PerksTabItem(active: perksVisual, showBadge: !perksVisual && showPerksBadge)
+                        .frame(width: slotWidth, height: dockHeight)
                         .contentShape(Rectangle())
-                        .onTapGesture { onSelect(p) }
+                        .swipeTabs(swiper)
+                        .onTapGesture { onOpenPerks() }
                 }
             }
         }
         .frame(height: dockHeight)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .circular))
         .padding(6)
-        .contentShape(Rectangle())
-        .swipeTabs(swiper)
         .clay(radius: 28, depth: 12)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -337,23 +455,50 @@ private struct TabBar: View {
 
 private struct Pills: View {
     let swiper: TabSwiper
+    let slotWidth: CGFloat
+    let dividerWidth: CGFloat
+    let portalAreaWidth: CGFloat
+    let totalWidth: CGFloat
     let height: CGFloat
 
     var body: some View {
-        GeometryReader { g in
-            let count = CGFloat(swiper.tabs.count)
-            let itemWidth = g.size.width / count
-            let progress = swiper.progress
-            let stretch = sin(.pi * progress)
-            let w = (itemWidth - 6) + 22 * stretch
-            let color = Tone.lerp(swiper.current.accent, (swiper.target ?? swiper.current).accent, progress)
-            let indicator = swiper.indicator()
-            // one pill per lap: when the ring wraps, it slides off one end and in at the other
-            ForEach(-1...1, id: \.self) { lap in
-                ClaySlab(color: color, radius: 22, depth: 6)
-                    .frame(width: w, height: height)
-                    .position(x: itemWidth * (indicator + CGFloat(lap) * count + 0.5), y: height / 2)
+        let progress = swiper.progress
+        let stretch = sin(.pi * progress)
+        let w = (slotWidth - 6) + 22 * stretch
+        let color = swiper.pillColor()
+        let indicator = swiper.indicator()
+        let count = swiper.tabs.count
+
+        if !swiper.perksVisible {
+            ZStack {
+                ForEach(-1...1, id: \.self) { lap in
+                    ClaySlab(color: color, radius: 22, depth: 6)
+                        .frame(width: w, height: height)
+                        .position(x: slotWidth * (indicator + CGFloat(lap * count) + 0.5), y: height / 2)
+                }
             }
+            .frame(width: portalAreaWidth, height: height)
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .circular))
+        } else {
+            let totalSlots = count + 1
+            let lastPortal = CGFloat(count - 1)
+            ZStack {
+                ForEach(-1...1, id: \.self) { lap in
+                    let s = indicator + CGFloat(lap * totalSlots)
+                    let center: CGFloat = if s <= lastPortal {
+                        slotWidth * (s + 0.5)
+                    } else if s <= CGFloat(count) {
+                        slotWidth * (lastPortal + 0.5) + (s - lastPortal) * (slotWidth + dividerWidth)
+                    } else {
+                        slotWidth * (s + 0.5) + dividerWidth
+                    }
+                    ClaySlab(color: color, radius: 22, depth: 6)
+                        .frame(width: w, height: height)
+                        .position(x: center, y: height / 2)
+                }
+            }
+            .frame(width: totalWidth, height: height)
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .circular))
         }
     }
 }
@@ -382,13 +527,60 @@ private struct TabItem: View {
                 }
             Spacer().frame(height: 3)
             Text(portal.label)
-                .m3(font: Display.semiBold(11))
+                .font(Font(Display.semiBold(10) as CTFont))
                 .foregroundStyle((active ? Ink : Muted).color)
                 .lineLimit(1)
+                .minimumScaleFactor(0.85)
                 .truncationMode(.tail)
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 2)
         }
     }
+}
+
+private struct PerksTabItem: View {
+    let active: Bool
+    let showBadge: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Image(systemName: "gift")
+                .font(.system(size: 19, weight: .semibold))
+                .frame(width: 22, height: 22)
+                .foregroundStyle((active ? Ink : PerkAccent).color)
+                .overlay(alignment: .topTrailing) {
+                    if showBadge {
+                        ZStack {
+                            Circle().fill(Clay.color)
+                            Circle().fill(PerkAccent.color).padding(1.5)
+                        }
+                        .frame(width: 9, height: 9)
+                        .offset(x: 5, y: -3)
+                    }
+                }
+            Spacer().frame(height: 3)
+            Text("Perks")
+                .font(Font(Display.semiBold(10) as CTFont))
+                .foregroundStyle((active ? Ink : Bone).color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .truncationMode(.tail)
+                .padding(.horizontal, 2)
+        }
+    }
+}
+
+/// 8:00 AM IST daily cycle key ("YYYY-MM-DD"), matching the backend worker's rollover.
+private func current8AmIstCycleKey() -> String {
+    var cal = Calendar(identifier: .gregorian)
+    cal.timeZone = TimeZone(identifier: "Asia/Kolkata")!
+    var date = Date()
+    if cal.component(.hour, from: date) < 8 {
+        date = cal.date(byAdding: .day, value: -1, to: date) ?? date
+    }
+    let y = cal.component(.year, from: date)
+    let m = cal.component(.month, from: date)
+    let d = cal.component(.day, from: date)
+    return String(format: "%04d-%02d-%02d", y, m, d)
 }
 
 /* ------------------------------- rollcall ------------------------------ */

@@ -61,10 +61,10 @@ private struct AppRoot: View {
                         SetupScreen(
                             initial: creds,
                             onSaved: { new in
+                                SecureCreds.save(new)
                                 Task {
                                     // a different account must not inherit the old one's sessions
                                     if new.kerberos != creds?.kerberos { await WebData.clear() }
-                                    SecureCreds.save(new)
                                     withAnimation(tween(0.4)) { creds = new; editing = false }
                                 }
                             },

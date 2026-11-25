@@ -2,20 +2,22 @@ import SwiftUI
 import UIKit
 import WebKit
 
-/// Holds every opened tab's WebView as a face of a cube that turns with the swipe.
+/// Holds every opened tab's WebView (and the pinned Perks WebView) as faces of a cube that turns with the swipe.
 struct PagesView: UIViewRepresentable {
     let model: CompanionModel
     /// Passed in so SwiftUI updates the container when a tab gets its WebView.
     let opened: [Portal]
+    let perksLoaded: Bool
 
     func makeUIView(context: Context) -> PagesContainer { PagesContainer(model: model) }
 
-    func updateUIView(_ view: PagesContainer, context: Context) { view.sync(opened) }
+    func updateUIView(_ view: PagesContainer, context: Context) { view.sync(opened, perksLoaded: perksLoaded) }
 }
 
 final class PagesContainer: UIView {
     private let model: CompanionModel
     private var faces: [Portal: Face] = [:]
+    private var perksFace: PerksFace?
 
     /// Distance from the eye to the page plane: Compose's `cameraDistance = 16 * density`.
     private static let cameraDistance: CGFloat = 16 * 72
@@ -29,14 +31,18 @@ final class PagesContainer: UIView {
         swiper.onChange = { [weak self] in self?.poseFaces() }
         addGestureRecognizer(PageSwipeRecognizer(
             swiper: swiper,
-            onDown: { [weak self] in self?.model.session(swiper.current).touchStarted() },
+            onDown: { [weak self] in
+                guard let self else { return }
+                if swiper.inPerks { self.model.perks.touchStarted() }
+                else { self.model.session(swiper.current).touchStarted() }
+            },
             pageWants: { [weak self] dir, start in self?.pageWants(dir, start) ?? true }
         ))
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
-    func sync(_ opened: [Portal]) {
+    func sync(_ opened: [Portal], perksLoaded: Bool) {
         for p in Array(faces.keys) where !opened.contains(p) {
             faces.removeValue(forKey: p)?.removeFromSuperview()
         }
@@ -44,6 +50,11 @@ final class PagesContainer: UIView {
             let face = Face(session: model.session(p))
             faces[p] = face
             addSubview(face)
+        }
+        if perksLoaded && perksFace == nil {
+            let pf = PerksFace(coordinator: model.perks)
+            perksFace = pf
+            addSubview(pf)
         }
         setNeedsLayout()
     }
@@ -60,26 +71,39 @@ final class PagesContainer: UIView {
         guard w > 0 else { return }
         let swiper = model.swiper
         for (p, face) in faces {
-            guard let pos = swiper.positionOf(p) else {
-                face.isHidden = true
-                continue
-            }
-            face.isHidden = false
-            face.bounds = CGRect(x: 0, y: 0, width: w, height: h)
-            face.layer.anchorPoint = CGPoint(x: pos < 0 ? 1 : 0, y: 0.5)
-            face.layer.position = CGPoint(x: pos < 0 ? w : 0, y: h / 2)
-            let depth = 1 - 0.14 * sin(.pi * abs(pos))
-            var perspective = CATransform3DIdentity
-            perspective.m34 = -1 / Self.cameraDistance
-            var t = CATransform3DMakeScale(depth, depth, 1)
-            t = CATransform3DConcat(t, CATransform3DMakeRotation(.pi / 2 * pos, 0, 1, 0))
-            t = CATransform3DConcat(t, perspective)
-            t = CATransform3DConcat(t, CATransform3DMakeTranslation(pos * w, 0, 0))
-            face.layer.transform = t
+            pose(face, at: swiper.positionOf(p), w: w, h: h)
+        }
+        if let perksFace {
+            pose(perksFace, at: swiper.perksPosition(), w: w, h: h)
         }
     }
 
+    private func pose(_ face: UIView, at pos: CGFloat?, w: CGFloat, h: CGFloat) {
+        guard let pos else {
+            face.isHidden = true
+            return
+        }
+        face.isHidden = false
+        face.bounds = CGRect(x: 0, y: 0, width: w, height: h)
+        face.layer.anchorPoint = CGPoint(x: pos < 0 ? 1 : 0, y: 0.5)
+        face.layer.position = CGPoint(x: pos < 0 ? w : 0, y: h / 2)
+        let depth = 1 - 0.14 * sin(.pi * abs(pos))
+        var perspective = CATransform3DIdentity
+        perspective.m34 = -1 / Self.cameraDistance
+        var t = CATransform3DMakeScale(depth, depth, 1)
+        t = CATransform3DConcat(t, CATransform3DMakeRotation(.pi / 2 * pos, 0, 1, 0))
+        t = CATransform3DConcat(t, perspective)
+        t = CATransform3DConcat(t, CATransform3DMakeTranslation(pos * w, 0, 0))
+        face.layer.transform = t
+    }
+
     private func pageWants(_ dir: Int, _ start: CGPoint) -> Bool {
+        if model.swiper.inPerks {
+            guard let wv = model.perks.webView else { return false }
+            if dir < 0 && start.x < 30 && wv.canGoBack { return true }
+            if dir > 0 && start.x > bounds.width - 30 && wv.canGoForward { return true }
+            return model.perks.touchBusy
+        }
         let s = model.session(model.swiper.current)
         guard let wv = s.webView else { return false }
         // the edge swipe goes back / forward in the page's history
@@ -120,6 +144,20 @@ private final class Face: UIView {
         host.view.frame = bounds
         host.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         addSubview(host.view)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+private final class PerksFace: UIView {
+    init(coordinator: PerkWebCoordinator) {
+        super.init(frame: .zero)
+        backgroundColor = UIColor(Ink.color)
+        let web = coordinator.createWebView()
+        web.removeFromSuperview()
+        web.frame = bounds
+        web.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        addSubview(web)
     }
 
     required init?(coder: NSCoder) { fatalError() }
