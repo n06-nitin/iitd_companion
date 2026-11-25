@@ -68,7 +68,7 @@ struct EditTabsSheet: View {
                         }
                     }
 
-                    Text("Tap to pick 4 tabs · arrows to reorder")
+                    Text("Tap to deselect and pick 4 tabs")
                         .m3(12, lineHeight: 16)
                         .foregroundStyle(Muted.color)
                         .multilineTextAlignment(.center)

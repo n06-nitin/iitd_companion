@@ -7,3 +7,11 @@
 # personal CAPTCHA model learning project; never published
 L2_IITD_Captcha/
 IITD_Companion_Speedrun.md
+Guide.pdf
+Rendezvous 2026 Sponsorship Deck Final.pdf
+
+# Private backend worker & partner assets (Never published to GitHub)
+worker/
+docs/images/milestone*.png
+android/app/src/main/assets/images/
+ios/IITDCompanion/Resources/images/

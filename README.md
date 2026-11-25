@@ -70,7 +70,7 @@ It is made by an IIT Delhi student, for IIT Delhi students: [Nitin Singh](#about
 
 - **Your password never leaves your phone** except to be typed into IIT Delhi's own login pages, over HTTPS, on those exact addresses.
 - **Encrypted at rest.** On Android, with an AES-256 key in the Android Keystore. On iPhone, in the iOS Keychain, for that device only (never synced to iCloud).
-- **No analytics, no ads, no tracking, no developer server.** The app talks only to IIT Delhi, plus DevClub for ClassGrid.
+- **Minimal, transparent backend for IITD Perks.** No third-party ads or third-party tracking SDKs. Only your Kerberos ID (never your password) and platform (`android`/`ios`) are sent to the XLON Labs Cloudflare Worker to load IITD Perks, check active drop badges, and maintain aggregate DAU/MAU counts and optional Perks milestones.
 - **Excluded from backups.** Your saved login is not copied to Android backups or restored onto another iPhone.
 - **One tap to remove it.** ⋮ menu → *Forget login & sign out* deletes your login and every portal cookie.
 

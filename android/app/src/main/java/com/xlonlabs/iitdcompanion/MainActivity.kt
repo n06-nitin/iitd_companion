@@ -107,9 +107,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -159,6 +165,9 @@ private fun App() {
         ) { edit ->
             val c = creds
             if (!edit && c != null) {
+                LaunchedEffect(c.kerberos) {
+                    WorkerTracker.checkin(c.kerberos)
+                }
                 CompanionScreen(
                     creds = c,
                     onEditCreds = { editing = true },
@@ -206,6 +215,7 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
     // is up the rest warm up one at a time (sign-in-by-themselves portals first), so
     // no WebView is ever built in the middle of a swipe.
     val opened = remember { mutableStateListOf(tab) }
+    var perksLoaded by remember { mutableStateOf(false) }
     LaunchedEffect(sessions, dock) {
         val first = sessions.getValue(swiper.current)
         withTimeoutOrNull(3000) { snapshotFlow { first.painted }.first { it } }
@@ -215,6 +225,10 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
                 // the user may have opened it during the wait; a second face would fight over its WebView
                 if (it !in opened) opened += it
             }
+        }
+        if (!perksLoaded) {
+            delay(700)
+            perksLoaded = true
         }
     }
     val session = sessions.getValue(tab)
@@ -254,30 +268,86 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
             .isSuccess
     }
 
-    BackHandler(enabled = true) {
-        val wv = session.webView
-        if (wv != null && wv.canGoBack()) wv.goBack()
-        else (ctx as? Activity)?.moveTaskToBack(true) // keep the sessions alive
-    }
-
     // a portal opened from the ⋮ menu, shown over the tabs
     var more by remember { mutableStateOf<Portal?>(null) }
     var vpnOpen by remember { mutableStateOf(false) }
-    var perksOpen by remember { mutableStateOf(false) }
     var editTabsOpen by remember { mutableStateOf(false) }
+    val perkState = rememberPerkState()
+
+    BackHandler(enabled = true) {
+        if (swiper.inPerks) {
+            val wv = perkState.webView
+            if (wv != null && wv.canGoBack()) wv.goBack() else swiper.exitPerks()
+        } else {
+            val wv = session.webView
+            if (wv != null && wv.canGoBack()) wv.goBack()
+            else (ctx as? Activity)?.moveTaskToBack(true) // keep the sessions alive
+        }
+    }
+
+    var lastSeenDropKey by remember { mutableStateOf(prefs.getString("lastSeenDropKey", null)) }
+    var cachedDropActive by remember { mutableStateOf(prefs.getBoolean("lastDropActive", false)) }
+    var cachedDropKey by remember { mutableStateOf(prefs.getString("lastDropKey", "") ?: "") }
+    var cycleTick by remember { mutableStateOf(current8AmIstCycleKey()) }
+
+    val liveDrop = WorkerTracker.dropStatus
+    LaunchedEffect(liveDrop) {
+        if (liveDrop != null) {
+            cachedDropActive = liveDrop.drop
+            cachedDropKey = liveDrop.dropKey
+            prefs.edit()
+                .putBoolean("lastDropActive", liveDrop.drop)
+                .putString("lastDropKey", liveDrop.dropKey)
+                .apply()
+        }
+    }
+
+    val activeDrop = liveDrop?.drop ?: cachedDropActive
+    val rawDropKey = liveDrop?.dropKey ?: cachedDropKey
+    val resolvedDropKey = if (activeDrop && rawDropKey.endsWith(":daily")) {
+        "${rawDropKey.removeSuffix(":daily")}:$cycleTick"
+    } else {
+        rawDropKey
+    }
+    val perksDotVisible = activeDrop && resolvedDropKey.isNotEmpty() && lastSeenDropKey != resolvedDropKey
+
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val obs = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                cycleTick = current8AmIstCycleKey()
+                WorkerTracker.refreshDropStatus()
+            }
+        }
+        lifecycle.addObserver(obs)
+        onDispose { lifecycle.removeObserver(obs) }
+    }
+    fun openPerks() {
+        val key = resolvedDropKey
+        if (key.isNotEmpty()) {
+            lastSeenDropKey = key
+            prefs.edit().putString("lastSeenDropKey", key).apply()
+        }
+        perksLoaded = true
+        swiper.goToPerks()
+    }
 
     val keyboardUp = WindowInsets.isImeVisible
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().imePadding()) {
             TopBar(
                 session = sessions.getValue(swiper.visual),
+                perksSelected = swiper.visualIsPerks,
+                perksLoading = perkState.isLoading,
+                perksBrowserUrl = "$WORKER_PERKS_URL?user=${creds.kerberos.trim().lowercase()}",
                 morePortals = moreList,
                 onEditCreds = onEditCreds,
                 onEditTabs = { editTabsOpen = true },
                 onForget = onForget,
                 onOpen = { more = it },
                 onOpenVpn = { vpnOpen = true },
-                onOpenPerks = { perksOpen = true },
+                onOpenPerks = ::openPerks,
+                onReloadPerks = { perkState.reload() },
                 modifier = Modifier.swipeTabs(swiper),
             )
 
@@ -290,10 +360,16 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
                     .clipToBounds()
                     .swipePages(
                         swiper,
-                        onDown = { sessions.getValue(swiper.current).touchStarted() },
+                        onDown = {
+                            if (swiper.inPerks) perkState.touchStarted()
+                            else sessions.getValue(swiper.current).touchStarted()
+                        },
                         pageWants = { dir ->
-                            val s = sessions.getValue(swiper.current)
-                            s.touchBusy || (s.pagePans != false && s.webView?.canScrollHorizontally(dir) == true)
+                            if (swiper.inPerks) perkState.touchBusy
+                            else {
+                                val s = sessions.getValue(swiper.current)
+                                s.touchBusy || (s.pagePans != false && s.webView?.canScrollHorizontally(dir) == true)
+                            }
                         }
                     )
             ) {
@@ -304,12 +380,13 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
                         val s = sessions.getValue(p)
                         Box(
                             Modifier.fillMaxSize().graphicsLayer {
-                                // cube turn: each page hinges on the edge it shares with its neighbour
                                 val pos = swiper.positionOf(p)
                                 if (pos == null) {
                                     alpha = 0f
                                     return@graphicsLayer
                                 }
+                                // cube turn: each page hinges on the edge it shares with its neighbour
+                                alpha = 1f
                                 translationX = pos * size.width
                                 rotationY = 90f * pos
                                 transformOrigin = TransformOrigin(if (pos < 0f) 1f else 0f, 0.5f)
@@ -326,23 +403,54 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
                                     s.webView(c, chooseFile).also { (it.parent as? ViewGroup)?.removeView(it) }
                                 },
                                 update = {
-                                    it.visibility = if (p == tab || p == swiper.target) View.VISIBLE else View.GONE
+                                    it.visibility = if ((p == tab && !swiper.inPerks) || p == swiper.target) View.VISIBLE else View.GONE
                                 }
                             )
-                            if (!s.painted) LoadingFace(p)
+                            if (((p == tab && !swiper.inPerks) || p == swiper.target) && !s.painted) LoadingFace(p)
                         }
+                    }
+                }
+                if (perksLoaded) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                val pos = swiper.perksPosition()
+                                if (pos == null) {
+                                    alpha = 0f
+                                    return@graphicsLayer
+                                }
+                                alpha = 1f
+                                translationX = pos * size.width
+                                rotationY = 90f * pos
+                                transformOrigin = TransformOrigin(if (pos < 0f) 1f else 0f, 0.5f)
+                                cameraDistance = 16f * density
+                                val depth = 1f - 0.14f * sin(PI.toFloat() * abs(pos))
+                                scaleX = depth
+                                scaleY = depth
+                            }
+                            .background(Ink)
+                    ) {
+                        PerkContent(state = perkState, visible = swiper.perksVisible)
                     }
                 }
             }
 
             if (!keyboardUp) {
-                if (tab == Portal.ROLLCALL) RollCallBar(session)
+                if (!swiper.visualIsPerks && tab == Portal.ROLLCALL) RollCallBar(session)
                 TabBar(
                     tabs = dock,
                     swiper = swiper,
                     sessions = sessions,
                     // tapping the open tab again goes back to that portal's home page
-                    onSelect = { p -> if (p == tab) sessions.getValue(p).home() else swiper.goTo(p) }
+                    onSelect = { p ->
+                        if (swiper.inPerks || p != tab) swiper.goTo(p)
+                        else sessions.getValue(p).home()
+                    },
+                    showPerksBadge = perksDotVisible,
+                    onOpenPerks = {
+                        if (swiper.inPerks) perkState.scrollToTop() else openPerks()
+                    },
                 )
             }
         }
@@ -379,14 +487,6 @@ private fun CompanionScreen(creds: Creds, onEditCreds: () -> Unit, onForget: () 
                 onRequestVpn = { more = Portal.VPN_REQUEST },
                 onClose = { vpnOpen = false }
             )
-        }
-
-        AnimatedVisibility(
-            visible = perksOpen,
-            enter = fadeIn(tween(250)) + slideInVertically(tween(300)) { it / 12 },
-            exit = fadeOut(tween(200))
-        ) {
-            PerkScreen(onClose = { perksOpen = false })
         }
 
         AnimatedContent(
@@ -478,6 +578,9 @@ private fun statusOf(s: PortalSession): Pair<String, Color> = when {
 @Composable
 private fun TopBar(
     session: PortalSession,
+    perksSelected: Boolean,
+    perksLoading: Boolean,
+    perksBrowserUrl: String,
     morePortals: List<Portal>,
     onEditCreds: () -> Unit,
     onEditTabs: () -> Unit,
@@ -485,11 +588,16 @@ private fun TopBar(
     onOpen: (Portal) -> Unit,
     onOpenVpn: () -> Unit,
     onOpenPerks: () -> Unit,
+    onReloadPerks: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val ctx = LocalContext.current
     var menuOpen by remember { mutableStateOf(false) }
-    val (label, dot) = statusOf(session)
+    val (label, dot) = if (perksSelected) {
+        (if (perksLoading) "Loading IITD Perks…" else "IITD Perks · Student Hub") to PerkAccent
+    } else {
+        statusOf(session)
+    }
     Column(modifier.fillMaxWidth().statusBarsPadding()) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
@@ -497,13 +605,15 @@ private fun TopBar(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             StatusPill(label, dot, Modifier.weight(1f))
-            ClayIconButton(Icons.Rounded.Refresh, "Reload") { session.reload() }
+            ClayIconButton(Icons.Rounded.Refresh, "Reload") {
+                if (perksSelected) onReloadPerks() else session.reload()
+            }
             Box {
                 ClayIconButton(Icons.Rounded.MoreVert, "More") { menuOpen = true }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(text = { Text("Open in browser") }, onClick = {
                         menuOpen = false
-                        val url = session.webView?.url ?: session.portal.home
+                        val url = if (perksSelected) perksBrowserUrl else (session.webView?.url ?: session.portal.home)
                         runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
                     })
                     DropdownMenuItem(text = { Text("Edit tabs") },
@@ -535,7 +645,17 @@ private fun TopBar(
                 }
             }
         }
-        PageProgress(session)
+        if (perksSelected) {
+            if (perksLoading) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(2.dp).clip(CircleShape),
+                    color = PerkAccent, trackColor = Color.Transparent,
+                )
+            } else Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(6.dp))
+        } else {
+            PageProgress(session)
+        }
     }
 }
 
@@ -553,8 +673,9 @@ private fun PageProgress(session: PortalSession) {
 }
 
 /**
- * Floating clay dock. The raised pill slides with the finger, stretches
- * mid-swipe and shifts from one portal's hue to the next.
+ * Floating clay dock with 4 cyclic portal slots on the left and a pinned
+ * non-removable Perks slot on the right. The raised pill slides with the
+ * finger across the 4 portals, stretches mid-swipe and shifts hue.
  */
 @Composable
 private fun TabBar(
@@ -562,39 +683,78 @@ private fun TabBar(
     swiper: TabSwiper,
     sessions: Map<Portal, PortalSession>,
     onSelect: (Portal) -> Unit,
+    showPerksBadge: Boolean,
+    onOpenPerks: () -> Unit,
 ) {
-    Box(
+    val perksVisual = swiper.visualIsPerks
+    BoxWithConstraints(
         Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 10.dp)
             .clay(radius = 28.dp, depth = 12.dp)
-            .swipeTabs(swiper)
             .padding(6.dp)
     ) {
-        BoxWithConstraints(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp))) {
-            val itemWidth = maxWidth / tabs.size
-            // one pill per lap: when the ring wraps, it slides off one end and in at the other
-            for (lap in -1..1) {
-                Box(
-                    Modifier
-                        .layout { measurable, _ ->
-                            val stretch = sin(PI.toFloat() * swiper.progress)
-                            val w = ((itemWidth - 6.dp).toPx() + 22.dp.toPx() * stretch).roundToInt()
-                            val h = DockHeight.roundToPx()
-                            val placeable = measurable.measure(Constraints.fixed(w, h))
-                            layout(w, h) {
-                                val slot = swiper.indicator() + lap * tabs.size
-                                placeable.place((itemWidth.toPx() * (slot + 0.5f) - w / 2f).roundToInt(), 0)
+        val dividerWidth = 9.dp
+        val slotWidth = (maxWidth - dividerWidth) / (tabs.size + 1)
+        val portalAreaWidth = slotWidth * tabs.size
+
+        // 1. Sliding clay pill: 4-tab cyclic mode when Perks isn't involved,
+        // or 5-slot wrap/glide mode across the divider when Perks is active/entering/exiting.
+        if (!swiper.perksVisible) {
+            Box(Modifier.width(portalAreaWidth).height(DockHeight).clip(RoundedCornerShape(22.dp))) {
+                for (lap in -1..1) {
+                    Box(
+                        Modifier
+                            .layout { measurable, _ ->
+                                val stretch = sin(PI.toFloat() * swiper.progress)
+                                val w = ((slotWidth - 6.dp).toPx() + 22.dp.toPx() * stretch).roundToInt()
+                                val h = DockHeight.roundToPx()
+                                val placeable = measurable.measure(Constraints.fixed(w, h))
+                                layout(w, h) {
+                                    val slot = swiper.indicator() + lap * tabs.size
+                                    placeable.place((slotWidth.toPx() * (slot + 0.5f) - w / 2f).roundToInt(), 0)
+                                }
                             }
-                        }
-                        .clay({ lerp(swiper.current.accent, (swiper.target ?: swiper.current).accent, swiper.progress) },
-                            radius = 22.dp, depth = 6.dp)
-                )
+                            .clay({ swiper.pillColor() }, radius = 22.dp, depth = 6.dp)
+                    )
+                }
             }
-            Row(Modifier.fillMaxWidth().height(DockHeight)) {
+        } else {
+            val totalSlots = tabs.size + 1
+            Box(Modifier.fillMaxWidth().height(DockHeight).clip(RoundedCornerShape(22.dp))) {
+                for (lap in -1..1) {
+                    Box(
+                        Modifier
+                            .layout { measurable, _ ->
+                                val slotPx = slotWidth.toPx()
+                                val divPx = dividerWidth.toPx()
+                                val stretch = sin(PI.toFloat() * swiper.progress)
+                                val w = ((slotWidth - 6.dp).toPx() + 22.dp.toPx() * stretch).roundToInt()
+                                val h = DockHeight.roundToPx()
+                                val placeable = measurable.measure(Constraints.fixed(w, h))
+                                layout(w, h) {
+                                    val s = swiper.indicator() + lap * totalSlots
+                                    val lastPortal = (tabs.size - 1).toFloat()
+                                    val center = when {
+                                        s <= lastPortal -> slotPx * (s + 0.5f)
+                                        s <= tabs.size.toFloat() -> slotPx * (lastPortal + 0.5f) + (s - lastPortal) * (slotPx + divPx)
+                                        else -> slotPx * (s + 0.5f) + divPx
+                                    }
+                                    placeable.place((center - w / 2f).roundToInt(), 0)
+                                }
+                            }
+                            .clay({ swiper.pillColor() }, radius = 22.dp, depth = 6.dp)
+                    )
+                }
+            }
+        }
+
+        // 2. Dock labels & icons
+        Row(Modifier.fillMaxWidth().height(DockHeight), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.width(portalAreaWidth).fillMaxHeight().swipeTabs(swiper)) {
                 tabs.forEach { p ->
-                    val active = p == swiper.visual
+                    val active = !perksVisual && p == swiper.visual
                     val s = sessions.getValue(p)
                     // needs you: waiting for a CAPTCHA, or auto sign-in failed
                     val badge = when {
@@ -629,18 +789,86 @@ private fun TabBar(
                         Spacer(Modifier.height(3.dp))
                         Text(
                             p.label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
-                            fontSize = 11.sp, fontFamily = Display, fontWeight = FontWeight.SemiBold,
+                            fontSize = 10.5.sp, fontFamily = Display, fontWeight = FontWeight.SemiBold,
                             color = if (active) Ink else Muted,
-                            modifier = Modifier.padding(horizontal = 4.dp)
+                            modifier = Modifier.padding(horizontal = 2.dp)
                         )
                     }
                 }
+            }
+
+            Box(
+                Modifier
+                    .padding(horizontal = 4.dp)
+                    .width(1.dp)
+                    .height(28.dp)
+                    .background(Faint.copy(alpha = 0.35f))
+            )
+
+            Column(
+                Modifier
+                    .width(slotWidth)
+                    .fillMaxHeight()
+                    .swipeTabs(swiper)
+                    .clip(RoundedCornerShape(22.dp))
+                    .clickableNoRipple(onClick = onOpenPerks),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Box {
+                    Icon(
+                        Icons.Rounded.CardGiftcard,
+                        contentDescription = "IITD Perks",
+                        tint = if (perksVisual) Ink else PerkAccent,
+                        modifier = Modifier.size(22.dp),
+                    )
+                    if (!perksVisual && showPerksBadge) {
+                        Box(
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 5.dp, y = (-3).dp)
+                                .size(9.dp)
+                                .border(1.5.dp, Clay, CircleShape)
+                                .padding(1.5.dp)
+                                .background(PerkAccent, CircleShape)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    "Perks",
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 10.5.sp,
+                    fontFamily = Display,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (perksVisual) Ink else Bone,
+                    modifier = Modifier.padding(horizontal = 2.dp),
+                )
             }
         }
     }
 }
 
 private val DockHeight = 56.dp
+
+/**
+ * 8:00 AM IST daily cycle key ("YYYY-MM-DD"), matching the backend worker's rollover.
+ */
+private fun current8AmIstCycleKey(): String {
+    val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"))
+    if (cal.get(Calendar.HOUR_OF_DAY) < 8) {
+        cal.add(Calendar.DAY_OF_MONTH, -1)
+    }
+    return String.format(
+        Locale.US,
+        "%04d-%02d-%02d",
+        cal.get(Calendar.YEAR),
+        cal.get(Calendar.MONTH) + 1,
+        cal.get(Calendar.DAY_OF_MONTH),
+    )
+}
 
 /* ------------------------------- rollcall ------------------------------ */
 @Composable

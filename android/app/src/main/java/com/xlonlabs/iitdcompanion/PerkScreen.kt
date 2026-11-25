@@ -6,47 +6,29 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.view.View
+import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,37 +37,80 @@ import java.net.URL
 
 internal val PerkAccent = Color(0xFFF2C14E)
 
+internal const val WORKER_PERKS_URL =
+    "https://iitd-companion-worker.hellonitinbro.workers.dev/api/perks"
+
 private const val REMOTE_PERKS_URL =
     "https://raw.githubusercontent.com/n06-nitin/iitd_companion/main/docs/perks.html"
 
-/**
- * IITD Perks Screen: loaded from the 3-dot (⋮) menu over the tabs.
- * Fetches docs/perks.html directly via HTTP and renders with explicit "text/html" MIME type,
- * with instant fallback to local bundled assets.
- */
-@SuppressLint("SetJavaScriptEnabled")
-@Composable
-fun PerkScreen(onClose: () -> Unit) {
-    val ctx = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var isLoading by remember { mutableStateOf(false) }
-    var webViewRef by remember { mutableStateOf<WebView?>(null) }
+private const val CAROUSEL_TOUCH_JS = """
+    if (!window.__icPerkTouch) {
+        window.__icPerkTouch = true;
+        document.addEventListener('touchstart', function(e) {
+            var el = e.target;
+            var busy = false;
+            while (el && el !== document.body) {
+                if (el.classList && (el.classList.contains('milestones-carousel') || el.classList.contains('images-carousel'))) {
+                    busy = true;
+                    break;
+                }
+                if (el.scrollWidth > el.clientWidth + 2) {
+                    var cs = getComputedStyle(el).overflowX;
+                    if (cs === 'auto' || cs === 'scroll') { busy = true; break; }
+                }
+                el = el.parentElement;
+            }
+            if (window.AndroidApp && window.AndroidApp.setTouchBusy) {
+                window.AndroidApp.setTouchBusy(busy);
+            }
+        }, { passive: true, capture: true });
+    }
+"""
 
-    // Read bundled local asset for instant 0ms initial display
-    val localHtml = remember {
-        runCatching {
-            ctx.assets.open("perks.html").bufferedReader().use { it.readText() }
-        }.getOrNull() ?: ""
+/**
+ * State holder for the embedded IITD Perks WebView tab so TopBar, BackHandler,
+ * and the Perks dock slot share loading state, reload, and lifecycle cleanly.
+ */
+@Stable
+class PerkState(private val ctx: Context, private val scope: CoroutineScope) {
+    var isLoading by mutableStateOf(false)
+        private set
+    var webView: WebView? = null
+        internal set
+    @Volatile var touchBusy = false
+        internal set
+    private var loadedOnce = false
+
+    fun touchStarted() {
+        touchBusy = false
     }
 
-    // Function to fetch the latest remote HTML and render as "text/html"
-    fun fetchRemotePerks() {
+    fun ensureLoaded() {
+        if (!loadedOnce) {
+            loadedOnce = true
+            reload()
+        }
+    }
+
+    fun reload() {
         scope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { isLoading = true }
+            val kerberos = SecureCreds.load(ctx)?.kerberos.orEmpty().trim().lowercase()
             val remoteText = runCatching {
-                // Query GitHub commit SHA to completely bypass Fastly's 5-minute CDN edge cache
+                // 1. Primary: Query Cloudflare Worker with user kerberos
+                val targetUrl = "$WORKER_PERKS_URL?user=$kerberos&t=${System.currentTimeMillis()}"
+                val conn = URL(targetUrl).openConnection() as HttpURLConnection
+                conn.useCaches = false
+                conn.connectTimeout = 6000
+                conn.readTimeout = 6000
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) IITDCompanion")
+                conn.setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+                conn.inputStream.bufferedReader().use { it.readText() }
+            }.getOrNull() ?: runCatching {
+                // 2. Fallback: Query GitHub commit SHA to bypass Fastly's 5-minute CDN cache
                 val sha = runCatching {
-                    val apiConn = URL("https://api.github.com/repos/n06-nitin/iitd_companion/commits/main").openConnection() as HttpURLConnection
+                    val apiConn = URL("https://api.github.com/repos/n06-nitin/iitd_companion/commits/main")
+                        .openConnection() as HttpURLConnection
                     apiConn.connectTimeout = 4000
                     apiConn.readTimeout = 4000
                     apiConn.setRequestProperty("User-Agent", "IITDCompanion")
@@ -101,146 +126,131 @@ fun PerkScreen(onClose: () -> Unit) {
 
                 val conn = URL(targetUrl).openConnection() as HttpURLConnection
                 conn.useCaches = false
-                conn.connectTimeout = 8000
-                conn.readTimeout = 8000
+                conn.connectTimeout = 6000
+                conn.readTimeout = 6000
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) IITDCompanion")
                 conn.setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
-                conn.setRequestProperty("Pragma", "no-cache")
                 conn.inputStream.bufferedReader().use { it.readText() }
             }.getOrNull()
 
             withContext(Dispatchers.Main) {
                 isLoading = false
                 if (!remoteText.isNullOrBlank() && remoteText.contains("<html", ignoreCase = true)) {
-                    webViewRef?.loadDataWithBaseURL("https://github.com", remoteText, "text/html", "UTF-8", null)
+                    webView?.loadDataWithBaseURL(
+                        "https://iitd-companion-worker.hellonitinbro.workers.dev",
+                        remoteText,
+                        "text/html",
+                        "UTF-8",
+                        null
+                    )
                 }
             }
         }
     }
 
-    BackHandler {
-        val wv = webViewRef
-        if (wv != null && wv.canGoBack()) wv.goBack() else onClose()
+    fun scrollToTop() {
+        webView?.evaluateJavascript("window.scrollTo({top: 0, behavior: 'smooth'})", null)
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            webViewRef?.destroy()
-            webViewRef = null
-        }
+    fun destroy() {
+        webView?.destroy()
+        webView = null
+    }
+}
+
+@Composable
+fun rememberPerkState(): PerkState {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val state = remember(ctx) { PerkState(ctx, scope) }
+    DisposableEffect(state) { onDispose { state.destroy() } }
+    return state
+}
+
+/**
+ * Embedded IITD Perks page rendered inside the main rounded tab frame,
+ * fetching docs/perks.html remotely with instant local asset fallback.
+ */
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+fun PerkContent(state: PerkState, visible: Boolean, modifier: Modifier = Modifier) {
+    val ctx = LocalContext.current
+    val localHtml = remember {
+        runCatching {
+            ctx.assets.open("perks.html").bufferedReader().use { it.readText() }
+        }.getOrNull() ?: ""
     }
 
-    // Auto-fetch fresh version in background when opened
-    LaunchedEffect(Unit) {
-        fetchRemotePerks()
+    LaunchedEffect(state) {
+        state.ensureLoaded()
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(Ink)
-            // prevent touches reaching underlying tabs
-            .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
-    ) {
-        // Top Header
-        Column(Modifier.fillMaxWidth().statusBarsPadding()) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                StatusPill("IITD Perks · Student Hub", PerkAccent, Modifier.weight(1f))
-                ClayIconButton(Icons.Rounded.Refresh, "Reload") {
-                    fetchRemotePerks()
-                }
-                ClayIconButton(Icons.Rounded.Close, "Close", onClose)
-            }
-
-            // Loading indicator
-            if (isLoading) {
-                LinearProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .height(2.dp)
-                        .clip(CircleShape),
-                    color = PerkAccent,
-                    trackColor = Color.Transparent
-                )
-            } else {
-                Spacer(Modifier.height(2.dp))
-            }
-            Spacer(Modifier.height(6.dp))
-        }
-
-        // WebView Container
-        Box(
-            Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
-                .clip(RoundedCornerShape(24.dp))
-        ) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { c ->
-                    WebView(c).apply {
-                        setBackgroundColor(Ink.toArgb())
-                        settings.apply {
-                            javaScriptEnabled = true
-                            domStorageEnabled = true
-                            useWideViewPort = true
-                            loadWithOverviewMode = true
-                            builtInZoomControls = false
-                            displayZoomControls = false
-                        }
-
-                        // JavaScript interface for native clipboard copy & external browser launch
-                        addJavascriptInterface(object {
-                            @JavascriptInterface
-                            fun copyText(text: String) {
-                                val cm = c.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                                cm?.setPrimaryClip(ClipData.newPlainText("IITD Perk", text))
-                                Toast.makeText(c, "Link copied to clipboard", Toast.LENGTH_SHORT).show()
-                            }
-
-                            @JavascriptInterface
-                            fun openExternal(url: String) {
-                                runCatching {
-                                    c.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                                }
-                            }
-                        }, "AndroidApp")
-
-                        webViewClient = object : WebViewClient() {
-                            override fun shouldOverrideUrlLoading(
-                                view: WebView?,
-                                request: WebResourceRequest?
-                            ): Boolean {
-                                val uri = request?.url ?: return false
-                                val url = uri.toString()
-                                // If mailto or external link, launch outside WebView
-                                if (url.startsWith("mailto:") || (url.startsWith("http") && !url.contains("perks.html"))) {
-                                    runCatching {
-                                        c.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                                    }
-                                    return true
-                                }
-                                return false
-                            }
-                        }
-
-                        // Render bundled local HTML immediately as "text/html"
-                        if (localHtml.isNotBlank()) {
-                            loadDataWithBaseURL("https://github.com", localHtml, "text/html", "UTF-8", null)
-                        }
-                        webViewRef = this
+    AndroidView(
+        modifier = modifier.fillMaxSize(),
+        factory = { c ->
+            state.webView?.also { (it.parent as? ViewGroup)?.removeView(it) }
+                ?: WebView(c).apply {
+                    setBackgroundColor(Ink.toArgb())
+                    settings.apply {
+                        javaScriptEnabled = true
+                        domStorageEnabled = true
+                        useWideViewPort = true
+                        loadWithOverviewMode = true
+                        builtInZoomControls = false
+                        displayZoomControls = false
                     }
+
+                    addJavascriptInterface(object {
+                        @JavascriptInterface
+                        fun copyText(text: String) {
+                            val cm = c.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                            cm?.setPrimaryClip(ClipData.newPlainText("IITD Perk", text))
+                            Toast.makeText(c, "Link copied to clipboard", Toast.LENGTH_SHORT).show()
+                        }
+
+                        @JavascriptInterface
+                        fun openExternal(url: String) {
+                            runCatching {
+                                c.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                            }
+                        }
+
+                        @JavascriptInterface
+                        fun setTouchBusy(busy: Boolean) {
+                            state.touchBusy = busy
+                        }
+                    }, "AndroidApp")
+
+                    webViewClient = object : WebViewClient() {
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            super.onPageFinished(view, url)
+                            view?.evaluateJavascript(CAROUSEL_TOUCH_JS, null)
+                        }
+
+                        override fun shouldOverrideUrlLoading(
+                            view: WebView?,
+                            request: WebResourceRequest?
+                        ): Boolean {
+                            val uri = request?.url ?: return false
+                            val url = uri.toString()
+                            if (url.startsWith("mailto:") || (url.startsWith("http") && !url.contains("perks.html"))) {
+                                runCatching {
+                                    c.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                                }
+                                return true
+                            }
+                            return false
+                        }
+                    }
+
+                    if (localHtml.isNotBlank()) {
+                        loadDataWithBaseURL("https://github.com", localHtml, "text/html", "UTF-8", null)
+                    }
+                    state.webView = this
                 }
-            )
+        },
+        update = {
+            it.visibility = if (visible) View.VISIBLE else View.GONE
         }
-    }
+    )
 }

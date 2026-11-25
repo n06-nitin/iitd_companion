@@ -134,16 +134,16 @@
       <span style="background: var(--vpn)"></span>
     </div>
     <h1>IITD Companion Privacy Policy</h1>
-    <p class="meta">Effective 18 November 2026 · Android and iPhone app <code>com.xlonlabs.iitdcompanion</code> · Developer: Nitin Singh (XLON Labs)</p>
+    <p class="meta">Effective 25 November 2026 · Android and iPhone app <code>com.xlonlabs.iitdcompanion</code> · Developer: Nitin Singh (XLON Labs)</p>
   </header>
 
   <div class="glance">
     <h2>At a glance</h2>
     <ul>
-      <li>The app does not collect, sell or share any personal data.</li>
-      <li>Your Kerberos ID and password stay on your phone, encrypted, and are only typed into IIT Delhi's own login pages.</li>
-      <li>The app opens IIT Delhi's websites, ClassGrid (DevClub), and Piazza. Nothing else.</li>
-      <li>No analytics, no ads, no tracking, and no server run by the developer.</li>
+      <li>The app does not sell or share personal data with third parties or advertisers.</li>
+      <li>Your Kerberos <strong>password</strong> never leaves your phone except to be typed into IIT Delhi's own login pages.</li>
+      <li>To power IITD Perks, campus drop badges, and aggregate usage counts, the app sends your Kerberos ID and platform (Android/iOS) to the developer's Cloudflare Worker.</li>
+      <li>No third-party ad networks, no third-party tracking SDKs, and no ads.</li>
     </ul>
   </div>
 
@@ -185,7 +185,8 @@
 
   <section>
     <h2>What goes over the internet</h2>
-    <p>The app only connects your phone directly to the websites listed above, as a browser would: IIT Delhi's, ClassGrid / DevClub, and Piazza. Whatever you do on those sites is handled by those providers under their own policies. Links to any other website open in your regular browser instead of the app. The IITD VPN helper does not run its own VPN service; it opens your <code>.ovpn</code> file in OpenVPN Connect.</p>
+    <p>For your daily portals, the app connects your phone directly to the websites listed above, as a browser would: IIT Delhi's, ClassGrid / DevClub, and Piazza. Whatever you do on those sites is handled by those providers under their own policies. Links to any other website open in your regular browser instead of the app. The IITD VPN helper does not run its own VPN service; it opens your <code>.ovpn</code> file in OpenVPN Connect.</p>
+    <p>For the <strong>IITD Perks</strong> tab and campus campaign drops, the app also talks to the developer's Cloudflare Worker (<code>iitd-companion-worker.hellonitinbro.workers.dev</code>) and GitHub (<code>raw.githubusercontent.com</code> / <code>api.github.com</code>) to fetch the latest Perks page and check whether a new drop is active. When signed in with a Kerberos ID, the app sends your Kerberos ID (never your password) and platform (<code>android</code> or <code>ios</code>) to record daily app-open counts (aggregate DAU/MAU), track optional Perks milestones, and save any custom leaderboard alias you choose inside IITD Perks. This data is never sold or shared with third-party advertisers or sponsors.</p>
   </section>
 
   <section>

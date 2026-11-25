@@ -2,11 +2,18 @@ import SwiftUI
 import WebKit
 
 /// IITD Perks Sheet: loaded from the 3-dot (⋮) menu over the tabs.
-/// Dynamically fetches docs/perks.html from GitHub with commit-SHA cache bypass,
-/// falling back instantly to the local bundled perks.html asset.
+/// Dynamically fetches verified student perks from Cloudflare Worker,
+/// falling back to GitHub and local bundled perks.html asset.
 struct PerkSheet: View {
+    let kerberos: String
     let onClose: () -> Void
-    @StateObject private var coordinator = PerkWebCoordinator()
+    @StateObject private var coordinator: PerkWebCoordinator
+
+    init(kerberos: String = "", onClose: @escaping () -> Void) {
+        self.kerberos = kerberos
+        self.onClose = onClose
+        _coordinator = StateObject(wrappedValue: PerkWebCoordinator(kerberos: kerberos))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -55,7 +62,14 @@ private struct PerkWebView: UIViewRepresentable {
 final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate, WKScriptMessageHandler {
     @Published var isLoading = false
     private var webView: WKWebView?
+    let kerberos: String
+    private let workerURL = "https://iitd-companion-worker.hellonitinbro.workers.dev/api/perks"
     private let remoteURL = "https://raw.githubusercontent.com/n06-nitin/iitd_companion/main/docs/perks.html"
+
+    init(kerberos: String = "") {
+        self.kerberos = kerberos
+        super.init()
+    }
 
     func createWebView() -> WKWebView {
         if let existing = webView { return existing }
@@ -63,6 +77,7 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
         let config = WKWebViewConfiguration()
         let contentController = WKUserContentController()
         contentController.add(self, name: "copyText")
+        contentController.add(self, name: "openBrowser")
 
         // Bridge for AndroidApp.copyText and AndroidApp.openBrowser compatibility
         let bridgeJS = """
@@ -71,7 +86,7 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
                 window.webkit.messageHandlers.copyText.postMessage(text);
             },
             openBrowser: function(url) {
-                window.location.href = url;
+                window.webkit.messageHandlers.openBrowser.postMessage(url);
             }
         };
         """
@@ -89,10 +104,10 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
         // Render bundled local HTML immediately for instant 0ms display
         if let localURL = Bundle.main.url(forResource: "perks", withExtension: "html"),
            let localHtml = try? String(contentsOf: localURL, encoding: .utf8) {
-            wv.loadHTMLString(localHtml, baseURL: URL(string: "https://github.com"))
+            wv.loadHTMLString(localHtml, baseURL: Bundle.main.bundleURL)
         }
 
-        // Fetch fresh copy from GitHub in background
+        // Fetch fresh copy from Worker / GitHub in background
         fetchRemote()
 
         return wv
@@ -105,7 +120,27 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
             defer { self.isLoading = false }
             guard let wv = self.webView else { return }
 
-            // 1. Query latest commit SHA to completely bypass edge CDN cache
+            // 1. Primary: Query Cloudflare Worker with user kerberos
+            let userParam = self.kerberos.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            let workerURLString = "\(self.workerURL)?user=\(userParam)&t=\(Int(Date().timeIntervalSince1970 * 1000))"
+
+            if let fetchURL = URL(string: workerURLString) {
+                var req = URLRequest(url: fetchURL)
+                req.timeoutInterval = 6
+                req.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+                req.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+                req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) IITDCompanion-iOS", forHTTPHeaderField: "User-Agent")
+
+                if let (htmlData, resp) = try? await URLSession.shared.data(for: req),
+                   let httpResp = resp as? HTTPURLResponse, httpResp.statusCode == 200,
+                   let html = String(data: htmlData, encoding: .utf8),
+                   html.localizedCaseInsensitiveContains("<html") {
+                    wv.loadHTMLString(html, baseURL: Bundle.main.bundleURL)
+                    return
+                }
+            }
+
+            // 2. Fallback: Query latest commit SHA to completely bypass edge CDN cache
             var targetURLString = self.remoteURL
             if let apiURL = URL(string: "https://api.github.com/repos/n06-nitin/iitd_companion/commits/main") {
                 var req = URLRequest(url: apiURL)
@@ -118,7 +153,7 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
                 }
             }
 
-            // 2. Fetch fresh HTML
+            // 3. Fallback: Fetch fresh HTML from GitHub
             guard let fetchURL = URL(string: targetURLString) else { return }
             var req = URLRequest(url: fetchURL)
             req.timeoutInterval = 8
@@ -130,7 +165,7 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
                let httpResp = resp as? HTTPURLResponse, httpResp.statusCode == 200,
                let html = String(data: htmlData, encoding: .utf8),
                html.localizedCaseInsensitiveContains("<html") {
-                wv.loadHTMLString(html, baseURL: URL(string: "https://github.com"))
+                wv.loadHTMLString(html, baseURL: Bundle.main.bundleURL)
             }
         }
     }
@@ -150,10 +185,13 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
             return
         }
 
-        if (scheme == "http" || scheme == "https") && !url.absoluteString.contains("perks.html") {
-            UIApplication.shared.open(url)
-            decisionHandler(.cancel)
-            return
+        // Only intercept explicit link taps by the user to open Safari
+        if navigationAction.navigationType == .linkActivated {
+            if scheme == "http" || scheme == "https" {
+                UIApplication.shared.open(url)
+                decisionHandler(.cancel)
+                return
+            }
         }
 
         decisionHandler(.allow)
@@ -162,6 +200,8 @@ final class PerkWebCoordinator: NSObject, ObservableObject, WKNavigationDelegate
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "copyText", let text = message.body as? String {
             UIPasteboard.general.string = text
+        } else if message.name == "openBrowser", let urlString = message.body as? String, let url = URL(string: urlString) {
+            UIApplication.shared.open(url)
         }
     }
 }

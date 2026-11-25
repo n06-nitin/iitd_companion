@@ -16,6 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker as ComposeVelocityTracker
@@ -28,11 +30,11 @@ import kotlin.math.sign
 /**
  * Interactive tab switching. [offset] is how far (px) the current page has been
  * dragged: negative moves it left to reveal the tab on the right. Pages read
- * [positionOf] in their graphics layer, so a drag never recomposes.
+ * [positionOf] / [perksPosition] in their graphics layer, so a drag never recomposes.
  *
- * The tabs form a ring, like the faces of the cube: past the last tab comes the
- * first again. A new drag can catch a turn that's still settling and carry on
- * from there, so quick repeated swipes chain round the ring.
+ * The 4 dock portals form a cyclic ring (Perks is excluded from the 4-part ring).
+ * When currently viewing Perks ([inPerks]), dragging right reveals the 4th dock portal
+ * on the left, and dragging left wraps to the 1st dock portal on the right.
  */
 @Stable
 class TabSwiper(private val scope: CoroutineScope, initialTabs: List<Portal>, initial: Portal) {
@@ -41,32 +43,64 @@ class TabSwiper(private val scope: CoroutineScope, initialTabs: List<Portal>, in
 
     var current by mutableStateOf(initial)
         private set
-    /** The tab being revealed, if any. */
+    /** The portal being revealed, if any. */
     var target by mutableStateOf<Portal?>(null)
         private set
+    /** Whether the user is settled on the pinned Perks tab. */
+    var inPerks by mutableStateOf(false)
+        private set
+    /** Whether Perks is currently sliding in as the target face. */
+    var targetIsPerks by mutableStateOf(false)
+        private set
+
     var offset by mutableFloatStateOf(0f)
         private set
     var width = 1f
 
-    /** Signed steps round the ring from [current] to [target]: ±1 for a swipe, up to ±2 for a tap. */
+    /** Signed steps round the ring from [current] to [target]: ±1 for a swipe, 0 for a Perks jump. */
     private var step by mutableIntStateOf(0)
     private var raw = 0f // finger travel
     private var job: Job? = null
     private var generation = 0
     /** Where the running animation will land, if it's turning to another tab. */
     private var landing: Portal? = null
+    private var landingPerks = false
 
     val progress get() = (abs(offset) / width).coerceIn(0f, 1f)
 
-    /** The tab that would be shown if the finger lifted now. Changes once per swipe, not per frame. */
+    /** True while Perks is on screen (settled, entering, or exiting). */
+    val perksVisible by derivedStateOf { inPerks || targetIsPerks }
+
+    /** True once the midpoint crosses into Perks (used for TopBar and dock labels). */
+    val visualIsPerks by derivedStateOf {
+        when {
+            targetIsPerks -> progress > 0.5f
+            inPerks -> target == null || progress <= 0.5f
+            else -> false
+        }
+    }
+
+    /** The portal that would be shown if the finger lifted now. Changes once per swipe, not per frame. */
     val visual by derivedStateOf { target?.takeIf { progress > 0.5f } ?: current }
 
     /** -1..1 horizontal position of [p] as a cube face, or null when off screen. */
     fun positionOf(p: Portal): Float? {
         val f = (offset / width).coerceIn(-1f, 1f)
-        return when (p) {
-            current -> f
-            target -> f + if (f < 0f) 1f else -1f
+        return when {
+            targetIsPerks -> if (p == current) f else null
+            inPerks -> if (p == target) f + if (f < 0f) 1f else -1f else null
+            p == current -> f
+            p == target -> f + if (f < 0f) 1f else -1f
+            else -> null
+        }
+    }
+
+    /** -1..1 horizontal position of the Perks cube face, or null when off screen. */
+    fun perksPosition(): Float? {
+        val f = (offset / width).coerceIn(-1f, 1f)
+        return when {
+            inPerks -> f
+            targetIsPerks -> f + if (f < 0f) 1f else -1f
             else -> null
         }
     }
@@ -77,16 +111,39 @@ class TabSwiper(private val scope: CoroutineScope, initialTabs: List<Portal>, in
         job = null
         generation++
         tabs = newTabs
-        settle(if (current in newTabs) current else newTabs.first())
+        settle(if (current in newTabs) current else newTabs.first(), inPerks)
     }
 
     /**
-     * Fractional tab index for the sliding dock pill. It can run past either end
-     * (-1..size) while wrapping round; the dock draws the overflow on the other side.
+     * Fractional tab index for the sliding dock pill.
+     * In 4-portal mode, runs in -1..4; when Perks is involved, runs in -1..5 (4 = Perks).
      */
     fun indicator(): Float {
-        val from = tabs.indexOf(current).coerceAtLeast(0).toFloat()
-        return if (target == null) from else from + progress * step
+        val count = tabs.size.toFloat()
+        return when {
+            targetIsPerks -> {
+                val from = tabs.indexOf(current).coerceAtLeast(0).toFloat()
+                from + (count - from) * progress
+            }
+            inPerks -> {
+                val t = target ?: return count
+                if (step != 0) count + progress * step
+                else {
+                    val to = tabs.indexOf(t).coerceAtLeast(0).toFloat()
+                    count + (to - count) * progress
+                }
+            }
+            else -> {
+                val from = tabs.indexOf(current).coerceAtLeast(0).toFloat()
+                if (target == null) from else from + progress * step
+            }
+        }
+    }
+
+    fun pillColor(): Color {
+        val from = if (inPerks) PerkAccent else current.accent
+        val to = if (targetIsPerks) PerkAccent else (target?.accent ?: from)
+        return lerp(from, to, progress)
     }
 
     /** Stop a running turn where it is, keeping every face in place on screen. */
@@ -96,14 +153,33 @@ class TabSwiper(private val scope: CoroutineScope, initialTabs: List<Portal>, in
         job = null
         generation++
         val to = landing
+        val toPerks = landingPerks
         landing = null
-        if (to != null && to == target && offset != 0f) {
-            // it was turning to `to`: make that the current face, re-expressing the offset from its side
-            val from = current
-            current = to
-            offset -= sign(offset) * width
-            target = from
-            step = -step
+        landingPerks = false
+        if (offset != 0f) {
+            if (toPerks && targetIsPerks) {
+                val from = current
+                inPerks = true
+                targetIsPerks = false
+                target = from
+                offset -= sign(offset) * width
+                step = -1
+            } else if (to != null && to == target) {
+                if (inPerks) {
+                    inPerks = false
+                    targetIsPerks = true
+                    current = to
+                    offset -= sign(offset) * width
+                    target = null
+                    step = 0
+                } else {
+                    val from = current
+                    current = to
+                    offset -= sign(offset) * width
+                    target = from
+                    step = -step
+                }
+            }
         }
         raw = offset
     }
@@ -113,36 +189,70 @@ class TabSwiper(private val scope: CoroutineScope, initialTabs: List<Portal>, in
         raw += dx
         if (raw == 0f) {
             target = null
+            targetIsPerks = false
             offset = 0f
             return
         }
         step = if (raw < 0f) 1 else -1
-        target = tabs[(tabs.indexOf(current).coerceAtLeast(0) + step).mod(tabs.size)]
+        targetIsPerks = false
+        target = if (inPerks) {
+            // From Perks: finger right (step = -1) reveals 4th dock; finger left (step = +1) wraps to 1st dock
+            if (step < 0) tabs.last() else tabs.first()
+        } else {
+            // Strictly cycle the 4 customizable portals; Perks is excluded from the 4-part ring
+            tabs[(tabs.indexOf(current).coerceAtLeast(0) + step).mod(tabs.size)]
+        }
         offset = raw.coerceIn(-width, width)
     }
 
     fun release(velocity: Float) {
         if (job?.isActive == true) return
         val t = target
-        val flung = abs(velocity) > 700f && sign(velocity) == sign(offset)
-        val flungBack = abs(velocity) > 700f && sign(velocity) == -sign(offset)
-        val commit = t != null && !flungBack && (abs(offset) > width * 0.22f || flung)
+        val toPerks = targetIsPerks
+        val fast = abs(velocity) > 700f
+        val flung = fast && sign(velocity) == sign(offset)
+        val flungBack = fast && sign(velocity) == -sign(offset)
+        val commit = (t != null || toPerks) && !flungBack && (abs(offset) > width * 0.22f || flung)
         val end = if (commit) sign(offset) * width else 0f
-        run(if (commit) t else null) {
+        run(if (commit) t else null, commit && toPerks) {
             animate(offset, end, velocity,
                 spring(dampingRatio = if (commit) 1f else 0.6f, stiffness = 380f), block = it)
         }
     }
 
-    /** Tapped a tab: turn the short way round the ring towards it. */
+    /** Tapped a portal tab: turn the short way round the ring (or out of Perks) towards it. */
     fun goTo(p: Portal) {
         finishNow()
-        if (p == current || p !in tabs) return
+        if (p !in tabs) return
+        if (inPerks) {
+            target = p
+            targetIsPerks = false
+            step = 0
+            run(p, false) { animate(0f, width, 0f, tween(420, easing = FastOutSlowInEasing), block = it) }
+            return
+        }
+        if (p == current) return
         val ahead = (tabs.indexOf(p) - tabs.indexOf(current).coerceAtLeast(0)).mod(tabs.size)
         step = if (ahead <= tabs.size / 2) ahead else ahead - tabs.size
         target = p
+        targetIsPerks = false
         val end = if (step > 0) -width else width
-        run(p) { animate(0f, end, 0f, tween(420, easing = FastOutSlowInEasing), block = it) }
+        run(p, false) { animate(0f, end, 0f, tween(420, easing = FastOutSlowInEasing), block = it) }
+    }
+
+    /** Tapped the pinned Perks slot: cube-turn smoothly into Perks from the right. */
+    fun goToPerks() {
+        finishNow()
+        if (inPerks) return
+        target = null
+        targetIsPerks = true
+        step = 0
+        run(null, true) { animate(0f, -width, 0f, tween(420, easing = FastOutSlowInEasing), block = it) }
+    }
+
+    /** Back button on Perks: turn smoothly back to the active portal. */
+    fun exitPerks() {
+        if (inPerks) goTo(current)
     }
 
     /** Jump a running turn straight to where it was going. */
@@ -151,24 +261,32 @@ class TabSwiper(private val scope: CoroutineScope, initialTabs: List<Portal>, in
         job?.cancel()
         job = null
         generation++
-        settle(landing)
+        settle(landing, landingPerks)
     }
 
-    private fun run(to: Portal?, anim: suspend ((Float, Float) -> Unit) -> Unit) {
+    private fun run(to: Portal?, toPerks: Boolean, anim: suspend ((Float, Float) -> Unit) -> Unit) {
         val gen = ++generation
         landing = to
+        landingPerks = toPerks
         job = scope.launch {
             anim { v, _ -> if (gen == generation) offset = v }
-            if (gen == generation) settle(to)
+            if (gen == generation) settle(to, toPerks)
         }
     }
 
-    private fun settle(to: Portal?) {
-        if (to != null) current = to
+    private fun settle(to: Portal?, toPerks: Boolean) {
+        if (toPerks) {
+            inPerks = true
+        } else if (to != null) {
+            inPerks = false
+            current = to
+        }
         offset = 0f
         raw = 0f
         target = null
+        targetIsPerks = false
         landing = null
+        landingPerks = false
         step = 0
     }
 }

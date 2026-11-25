@@ -133,12 +133,13 @@ struct CompanionScreen: View {
             }
 
             if perksOpen {
-                PerkSheet(onClose: { withAnimation(tween(0.2)) { perksOpen = false } })
+                PerkSheet(kerberos: model.creds.kerberos, onClose: { withAnimation(tween(0.2)) { perksOpen = false } })
                     .transition(.opacity.combined(with: .offset(y: 40)))
                     .zIndex(2)
             }
         }
         .task {
+            WorkerTracker.checkin(kerberos: model.creds.kerberos)
             #if DEBUG
             // simulator aid: -ICDebugOpen EACADEMICS opens a ⋮-menu portal at launch
             if let p = UserDefaults.standard.string(forKey: "ICDebugOpen").flatMap(Portal.init(rawValue:)) { more = p }
@@ -209,11 +210,6 @@ private struct TopBar: View {
                     Button("Open in browser") {
                         openExternally(Demo.real(session.webView?.url ?? session.portal.home))
                     }
-                    Button {
-                        onOpenPerks()
-                    } label: {
-                        Label("IITD Perks", systemImage: "gift")
-                    }
                     Button("Edit tabs", action: onEditTabs)
                     Button("Edit saved login", action: onEditCreds)
                     Button("Forget login & sign out", action: onForget)
@@ -223,6 +219,11 @@ private struct TopBar: View {
                             Button { onOpen(p) } label: { Label(p.label, image: p.icon) }
                         }
                         Button(action: onOpenVpn) { Label("IITD VPN", image: "icon_vpn_key") }
+                        Button {
+                            onOpenPerks()
+                        } label: {
+                            Label("IITD Perks", systemImage: "gift")
+                        }
                     }
                 } label: {
                     ClayIconFace {

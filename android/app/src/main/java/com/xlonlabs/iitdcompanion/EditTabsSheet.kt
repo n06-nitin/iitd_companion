@@ -126,7 +126,7 @@ fun EditTabsSheet(
             }
 
             Text(
-                "Tap to pick 4 tabs · arrows to reorder",
+                "Tap to deselect and pick 4 tabs",
                 color = Muted, fontSize = 12.sp, textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
